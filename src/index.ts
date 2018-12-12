@@ -81,10 +81,10 @@ readStream.on('data', (chunk) => {
         }
     }
     catch (err) {
-        console.log("Error loading configuration: " + err.message);
+        console.error("Error loading configuration: " + err.message);
     }
 }).on("error", (err) => {
-    console.log("Error loading configuration: " + err.message);
+    console.error("Error loading configuration: " + err.message);
 });
 
 interface GeoJSONGeometry {
@@ -345,7 +345,7 @@ class GeoJSONCollection implements Collection {
                         console.debug('Rows',rows.length);
                     }
                     catch (err) {
-                        console.log('Response parsing error: ' + err.message);
+                        console.error('Response parsing error: ' + err.message);
 
                         ret.push(err);
                         ret.push(null);
@@ -404,7 +404,7 @@ class GeoJSONCollection implements Collection {
 
                     setTimeout(nextRow, 5);
                 }).on("error", (err) => {
-                    console.log('Data query error: ' + err.message);
+                    console.error('Data query error: ' + err.message);
 
                     ret.push(err);
                     ret.push(null);
