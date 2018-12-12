@@ -1,0 +1,45 @@
+{
+  "name": "sofp-example-backend",
+  "version": "0.0.1",
+  "description": "Example backend for sofp-core, showing how integration and packaging is achieved",
+  "main": "dist/index.js",
+  "sofp-backend": "SofpExampleBackend",
+  "scripts": {
+    "start": "tsc -w & nodemon ../sofp-core/dist/server/app.js .",
+    "build": "tsc",
+    "test": "jest dist/**.test.js"
+  },
+  "engines": {
+    "node": "^8.11.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vaisala-oss/sofp-example-backend.git"
+  },
+  "author": "Vaisala Corporation",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vaisala-oss/sofp-example-backend/issues"
+  },
+  "homepage": "https://github.com/vaisala-oss/sofp-example-backend#readme",
+  "contributors": [
+    {
+      "name": "Sampo Savolainen",
+      "email": "sampo.savolainen@spatineo.com"
+    }
+  ],
+  "dependencies": {
+    "sofp-lib": "0.1.0",
+    "lodash": "~4.17.11"
+  },
+  "devDependencies": {
+    "nodemon": "~1.18.3",
+    "jest": "~23.6.0",
+    "typescript": "~2.9.2",
+    "@types/node": "~10.9.3",
+    "ts-node": "~7.0.1",
+    "@types/jest": "~23.3.1",
+    "ts-jest": "~23.1.4",
+    "@types/lodash": "4.14.116"
+  }
+}
