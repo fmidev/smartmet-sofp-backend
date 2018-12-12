@@ -25,7 +25,7 @@ readStream.on('data', (chunk) => {
 
 	// Default locations for enumerable data
 
-        var defaultLocation = '&keyword=synop';
+        var defaultLocation = '&keyword=ajax_fi_all';
         if (_.has(conf, 'defaultlocation')) {
             if ((!_.isString(conf.defaultlocation)) || (conf.defaultlocation == '')) {
                 throw new Error('defaultlocation: Default location must be a nonempty string');
@@ -308,14 +308,17 @@ class GeoJSONCollection implements Collection {
 
             nextTokenRow.row = Math.floor(nextTokenRow.nextToken / nParams);
             nextTokenRow.curToken = nextTokenRow.row * nParams;
-console.log('** nParams',nParams,'token',nextTokenRow.nextToken,'row',nextTokenRow.row,'cur',nextTokenRow.curToken);
+            console.debug('nParams',nParams,'next',nextTokenRow.nextToken,'row',nextTokenRow.row,'cur',nextTokenRow.curToken);
 
             return dataRequestParameters;
         }
 
         function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextToken : Number,limit : Number) : String {
-            return collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
-                   '&startrow=' + String(nextToken) + '&maxresults=' + String(limit) + '&format=json';
+            var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
+                          '&startrow=' + String(nextToken) + '&maxresults=' + String(limit) + '&format=json';
+            console.debug(request);
+
+            return request;
         }
 
         function dataQuery(collection : GeoJSONCollection, requestParameters : String, nextTokenRow, limit : Number, ret) {
@@ -339,6 +342,7 @@ console.log('** nParams',nParams,'token',nextTokenRow.nextToken,'row',nextTokenR
 
                     try {
                         rows = ((buf.length > 0) ? JSON.parse(buf) : Array());
+                        console.debug('Rows',rows.length);
                     }
                     catch (err) {
                         console.log('Response parsing error: ' + err.message);
@@ -383,6 +387,8 @@ console.log('** nParams',nParams,'token',nextTokenRow.nextToken,'row',nextTokenR
                                     if (ret.push(item)) {
                                         outputCount++;
                                     }
+                                    else
+                                        console.debug('Filt',nextTokenRow.nextToken,param,data[param]);
                                 }
 
                                 N++;
