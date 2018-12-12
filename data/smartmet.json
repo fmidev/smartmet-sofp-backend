@@ -1,7 +1,6 @@
 {
-  "zerver" : "http://smartmet.fmi.fi",
-  "server" : "http://crash.fmi.fi:8999",
-  "defaultlocation": "&place=Helsinki",
-  "innumerabledataproducers" : [ "pal", "hirlam" ],
+  "server" : "http://localhost:8080",
+  "defaultlocation": "&keyword=ajax_fi_all",
+  "innumerabledataproducers" : [ "hirlam", "harmonie_scandinavia_surface" ],
   "enumerabledataproducers" : [ "opendata" ]
 }
