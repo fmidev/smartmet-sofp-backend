@@ -304,11 +304,13 @@ class GeoJSONCollection implements Collection {
                 }
             }
 
-            // Adjust nextToken to the start of row for timeseries
+            // Adjust max number of rows and nextToken to the start of first row for timeseries
 
             nextTokenRow.row = Math.floor(nextTokenRow.nextToken / nParams);
             nextTokenRow.curToken = nextTokenRow.row * nParams;
-            console.debug('nParams',nParams,'next',nextTokenRow.nextToken,'row',nextTokenRow.row,'cur',nextTokenRow.curToken);
+            var n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
+            nextTokenRow.limit = Math.floor(n / nParams) + (((n % nParams) > 0) ? 1 : 0);
+            console.debug('nParams',nParams,'next',nextTokenRow.nextToken,'row',nextTokenRow.row,'cur',nextTokenRow.curToken,'lim',nextTokenRow.limit);
 
             return dataRequestParameters;
         }
@@ -331,7 +333,7 @@ class GeoJSONCollection implements Collection {
             const http = require('http');
             var buf = '';
 
-            http.get(dataRequestUrl(collection, requestParameters, nextTokenRow.row, limit), (response) => {
+            http.get(dataRequestUrl(collection, requestParameters, nextTokenRow.row, nextTokenRow.limit), (response) => {
                 var outputCount = 0;
 
                 response.on('data', (chunk) => {
@@ -412,7 +414,7 @@ class GeoJSONCollection implements Collection {
              });
         }
 
-        var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: nextToken };
+        var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: nextToken, limit: query.limit };
 
         dataQuery(this, extractDataQueryParameters(this, ret.remainingFilter, nextTokenRow), nextTokenRow, query.limit, ret);
         
