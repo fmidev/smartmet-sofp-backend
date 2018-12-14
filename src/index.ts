@@ -181,14 +181,26 @@ class GeoJSONCollection implements Collection {
                 this.required = false;
             }
         }
-        function extractDataQueryParameters(collection : GeoJSONCollection, queryFilters, nextTokenRow) : String {
-            function extractPropertyFilter(requestParameter, queryFilters) : String {
+        function extractDataQueryParameters(collection : GeoJSONCollection, queryFilters, nextTokenRow, paramMap) : String {
+            function extractPropertyFilter(requestParameter, queryFilters, paramMap) : String {
                 var filter = requestParameter.parameterName;
                 var nElem = (filter.indexOf("=") < (filter.length - 1)) ? 1 : 0;
                 var propFilter : Filter = _.find(queryFilters, { filterClass: 'PropertyFilter' });
 
                 if (propFilter && (_.keys(propFilter.parameters.properties).indexOf(requestParameter.propertyName) >= 0)) {
-                    filter += ((nElem++ == 0) ? "" : ",") + encodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]);
+                    // To handle request with same data parameter multiple times, collect parameter names into a map with unique alias name
+                    //
+                    if (requestParameter.propertyName == 'parametername') {
+                        _.forEach(decodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]).split(','), (param) => {
+                            var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
+                            paramMap[alias] = param;
+                            filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param) + ' as ' + alias);
+                        });
+                    }
+                    else {
+                        filter += ((nElem++ == 0) ? "" : ",") + encodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]);
+                    }
+
                     delete propFilter.parameters.properties[requestParameter.propertyName];
 
                     return filter;
@@ -272,7 +284,7 @@ class GeoJSONCollection implements Collection {
             }
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
-                var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters);
+                var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
 
                 if (!dataRequestParameter) {
                     if (requestParameter instanceof RequiredDataRequestParameter) {
@@ -323,14 +335,17 @@ class GeoJSONCollection implements Collection {
             return request;
         }
 
-        function dataQuery(collection : GeoJSONCollection, requestParameters : String, nextTokenRow, limit : Number, ret) {
+        function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : Number, ret) {
             class Geometry implements GeoJSONGeometry {
                 constructor() {
                     this.type = 'Point';
                     this.coordinates = [ ];
                 }
             }
+
             const http = require('http');
+            var paramMap = new Map();
+            var requestParameters = extractDataQueryParameters(collection, ret.remainingFilter, nextTokenRow, paramMap);
             var buf = '';
 
             http.get(dataRequestUrl(collection, requestParameters, nextTokenRow), (response) => {
@@ -380,7 +395,7 @@ class GeoJSONCollection implements Collection {
 //                              Object.keys(param).forEach((value) => {
                                 if ((nextTokenRow.curToken++ >= nextTokenRow.nextToken) && (outputCount < limit)) {
                                     item.feature.properties['gml_id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
-                                    item.feature.properties['ParameterName'] = param;
+                                    item.feature.properties['ParameterName'] = paramMap[param];
                                     item.feature.properties['ParameterValue'] = data[param];
 //                                  item.feature.properties['ParameterValue'] = data[value];
 
@@ -416,8 +431,8 @@ class GeoJSONCollection implements Collection {
 
         var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
 
-        dataQuery(this, extractDataQueryParameters(this, ret.remainingFilter, nextTokenRow), nextTokenRow, query.limit, ret);
-        
+        dataQuery(this, nextTokenRow, query.limit, ret);
+
         return ret;
     }
 
