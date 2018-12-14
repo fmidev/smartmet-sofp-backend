@@ -315,9 +315,9 @@ class GeoJSONCollection implements Collection {
             return dataRequestParameters;
         }
 
-        function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextToken : Number,limit : Number) : String {
+        function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextTokenRow) : String {
             var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
-                          '&startrow=' + String(nextToken) + '&maxresults=' + String(limit) + '&format=json';
+                          '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) + '&format=json';
             console.debug(request);
 
             return request;
@@ -333,7 +333,7 @@ class GeoJSONCollection implements Collection {
             const http = require('http');
             var buf = '';
 
-            http.get(dataRequestUrl(collection, requestParameters, nextTokenRow.row, nextTokenRow.limit), (response) => {
+            http.get(dataRequestUrl(collection, requestParameters, nextTokenRow), (response) => {
                 var outputCount = 0;
 
                 response.on('data', (chunk) => {
@@ -414,7 +414,7 @@ class GeoJSONCollection implements Collection {
              });
         }
 
-        var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: nextToken, limit: query.limit };
+        var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
 
         dataQuery(this, extractDataQueryParameters(this, ret.remainingFilter, nextTokenRow), nextTokenRow, query.limit, ret);
         
