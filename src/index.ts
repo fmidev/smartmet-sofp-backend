@@ -366,6 +366,7 @@ class GeoJSONCollection implements Collection {
 
                         ret.push(err);
                         ret.push(null);
+                        return;
                     }
 
                     function nextRow() {
