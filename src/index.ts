@@ -2,7 +2,7 @@ import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter} 
 
 import * as _ from 'lodash';
 
-let SofpExampleBackend = new Backend('SofpExampleBackend');
+let SofpSmartmetBackend = new Backend('SofpSmartmetBackend');
 
 // Load configuration file
 
@@ -46,7 +46,7 @@ readStream.on('data', (chunk) => {
                     throw new Error('innumerabledataproducers: Producer names must be nonempty strings');
                 }
 
-                SofpExampleBackend.collections.push(new GeoJSONCollection(producer,
+                SofpSmartmetBackend.collections.push(new GeoJSONCollection(producer,
                                                                           producer + ' data by FMI',
                                                                           server,
                                                                           producer,
@@ -67,7 +67,7 @@ readStream.on('data', (chunk) => {
                     throw new Error('Producer names must be nonempty strings');
                 }
 
-                SofpExampleBackend.collections.push(new GeoJSONCollection(producer,
+                SofpSmartmetBackend.collections.push(new GeoJSONCollection(producer,
                                                                           producer + ' data by FMI',
                                                                           server,
                                                                           producer,
@@ -76,7 +76,7 @@ readStream.on('data', (chunk) => {
             });
         }
 
-        if (SofpExampleBackend.collections.length == 0) {
+        if (SofpSmartmetBackend.collections.length == 0) {
             throw new Error('No producers');
         }
     }
@@ -452,4 +452,4 @@ class GeoJSONCollection implements Collection {
     }
 };
 
-export {SofpExampleBackend};
+export {SofpSmartmetBackend};

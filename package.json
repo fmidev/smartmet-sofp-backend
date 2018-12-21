@@ -1,9 +1,9 @@
 {
-  "name": "sofp-example-backend",
+  "name": "sofp-smartmet-backend",
   "version": "0.0.1",
-  "description": "Example backend for sofp-core, showing how integration and packaging is achieved",
+  "description": "Smartmet backend for sofp-core",
   "main": "dist/index.js",
-  "sofp-backend": "SofpExampleBackend",
+  "sofp-backend": "SofpSmartmetBackend",
   "scripts": {
     "start": "tsc -w & nodemon ../sofp-core/dist/server/app.js .",
     "build": "tsc",
@@ -14,18 +14,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vaisala-oss/sofp-example-backend.git"
+    "url": "git+https://github.com/fmidev/smartmet-sofp-backend"
   },
-  "author": "Vaisala Corporation",
+  "author": "2018 Finnish Meteorological Institute FMI",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/vaisala-oss/sofp-example-backend/issues"
+    "url": "https://github.com/fmidev/smartmet-sofp-backend/issues"
   },
-  "homepage": "https://github.com/vaisala-oss/sofp-example-backend#readme",
+  "homepage": "https://github.com/fmidev/smartmet-sofp-backend#readme",
   "contributors": [
     {
-      "name": "Sampo Savolainen",
-      "email": "sampo.savolainen@spatineo.com"
+      "name": "Roope Tervo",
+      "email": "roope.tervo@fmi.fi"
     }
   ],
   "dependencies": {
