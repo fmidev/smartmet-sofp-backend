@@ -221,7 +221,7 @@ class GeoJSONCollection implements Collection {
                     }
                 }
             }
-            function pointsWithinBBOX(BBOXCorners : []) : String {
+            function pointsWithinBBOX(BBOXCorners : number[]) : String {
                 // Return evenly spaced points within the bbox
                 //
                 var nPoints = 100;
@@ -275,7 +275,7 @@ class GeoJSONCollection implements Collection {
 
             var parameterGroups = new Set();
             var dataRequestParameters = '';
-            var nParams : Number = 0;
+            var nParams : number = 0;
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
                 if (requestParameter instanceof RequiredGroupDataRequestParameter) {
@@ -337,6 +337,9 @@ class GeoJSONCollection implements Collection {
 
         function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : Number, ret) {
             class Geometry implements GeoJSONGeometry {
+                type : string;
+                coordinates : Number[];
+
                 constructor() {
                     this.type = 'Point';
                     this.coordinates = [ ];
