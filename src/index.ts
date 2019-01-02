@@ -238,6 +238,10 @@ class GeoJSONCollection implements Collection {
                 var x,y,delim = '';
                 var dataRequestParameter = '&latlons=';
 
+                if (isNaN(width) || isNaN(height)) {
+                    throw new Error('Invalid bbox: ' + _.map(BBOXCorners).join(','));
+                }
+
                 for (x = 0; x < width; x += xStep) {
                     for (y = 0; y < height; y += yStep) {
                          dataRequestParameter += (delim + (y0 + y).toPrecision(5) + ',' + (x0 + x).toPrecision(5));
@@ -329,7 +333,8 @@ class GeoJSONCollection implements Collection {
 
         function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextTokenRow) : String {
             var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
-                          '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) + '&format=json';
+                          '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) +
+                          '&format=json&missingtext=null';
             console.debug(request);
 
             return request;
