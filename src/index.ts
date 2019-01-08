@@ -446,21 +446,24 @@ class GeoJSONCollection implements Collection {
                                     numValues = (numValues > numCoords ? numCoords : numValues);
                                 }
 
-                                while ((valIdx < numValues) && (nextTokenRow.curToken++ >= nextTokenRow.nextToken) && (outputCount < limit)) {
-                                    item.feature.properties['gml_id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
-                                    item.feature.properties['ParameterName'] = paramMap[param];
-                                    item.feature.properties['ParameterValue'] = data[param][valIdx];
-                                    item.feature.geometry.coordinates[0] = row['lon'][valIdx];
-                                    item.feature.geometry.coordinates[1] = row['lat'][valIdx++];
+                                while ((valIdx < numValues) && (outputCount < limit)) {
+                                    if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                        item.feature.properties['gml_id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
+                                        item.feature.properties['ParameterName'] = paramMap[param];
+                                        item.feature.properties['ParameterValue'] = data[param][valIdx];
+                                        item.feature.geometry.coordinates[0] = row['lon'][valIdx];
+                                        item.feature.geometry.coordinates[1] = row['lat'][valIdx];
 
-                                    item.nextToken = String(++nextTokenRow.nextToken);
+                                        item.nextToken = String(++nextTokenRow.nextToken);
 
-                                    if (ret.push(item)) {
-                                        outputCount++;
+                                        if (ret.push(item)) {
+                                            outputCount++;
+                                        }
+                                        else
+                                            console.debug('Filt',nextTokenRow.nextToken,param,data[param]);
                                     }
-                                    else
-                                        console.debug('Filt',nextTokenRow.nextToken,param,data[param]);
 
+                                    valIdx++;
                                     N++;
                                 }
                             });
