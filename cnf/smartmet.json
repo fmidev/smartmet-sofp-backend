@@ -2,5 +2,7 @@
   "server" : "http://localhost:8080",
   "defaultlocation": "&keyword=ajax_fi_all",
   "innumerabledataproducers" : [ "hirlam", "harmonie_scandinavia_surface" ],
-  "enumerabledataproducers" : [ "opendata" ]
+  "enumerabledataproducers" : [
+                               { "timesteps" : [ "1m", "10m", "1h" ], "producers" : [ "opendata" ] }
+                              ]
 }
