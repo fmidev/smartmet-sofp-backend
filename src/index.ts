@@ -51,6 +51,7 @@ readStream.on('data', (chunk) => {
                                                                           server,
                                                                           producer,
                                                                           '',
+                                                                          '',
                                                                           false));
             });
         }
@@ -59,20 +60,52 @@ readStream.on('data', (chunk) => {
 
         if (_.has(conf, 'enumerabledataproducers')) {
             if (!_.isArray(conf.enumerabledataproducers)) {
-                throw new Error('enumerabledataproducers: Producer names must be an array of nonempty strings');
+                throw new Error('enumerabledataproducers: Producers must be an array of objects');
             }
 
-            conf.enumerabledataproducers.forEach( (producer) => {
-                if ((!_.isString(producer)) || (producer == '')) {
-                    throw new Error('Producer names must be nonempty strings');
+            _.forEach(conf.enumerabledataproducers, (enumerabledataproducers) => {
+                if (!_.isArray(enumerabledataproducers.producers)) {
+                    throw new Error('enumerabledataproducers: Producer names must be an array of nonempty strings');
                 }
 
-                SofpSmartmetBackend.collections.push(new GeoJSONCollection(producer,
-                                                                          producer + ' data by FMI',
-                                                                          server,
-                                                                          producer,
-                                                                          defaultLocation,
-                                                                          true));
+                var timesteps = [ '' ];
+
+                if (_.has(enumerabledataproducers,'timesteps')) {
+                    if (!_.isArray(enumerabledataproducers.timesteps)) {
+                        throw new Error('enumerabledataproducers: timesteps must be an array of strings');
+                    }
+                    else {
+                        timesteps = enumerabledataproducers.timesteps;
+                    }
+                }
+
+                _.forEach(timesteps, (timestep) => {
+                    var timeStepSuffix = '';
+                    var timeStepName = '';
+
+                    if (!_.isString(timestep)) {
+                        throw new Error('timesteps must be strings');
+                    }
+                    else if (timestep != '') {
+                        timeStepSuffix =  '_' + timestep;
+                        timeStepName = ' ' + timestep;
+                        timestep = '&timestep=' + timestep;
+                    }
+
+                    _.forEach(enumerabledataproducers.producers, (producer) => {
+                        if ((!_.isString(producer)) || (producer == '')) {
+                            throw new Error('Producer names must be nonempty strings');
+                        }
+
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(producer + timeStepSuffix,
+                                                                                   producer + timeStepName + ' data by FMI',
+                                                                                   server,
+                                                                                   producer,
+                                                                                   timestep,
+                                                                                   defaultLocation,
+                                                                                   true));
+                    });
+                });
             });
         }
 
@@ -120,15 +153,17 @@ class GeoJSONCollection implements Collection {
 
     server : string;
     producer : string;
+    timestep : string;
     enumerable : boolean;
     defaultLocation : string;
     data : GeoJSONFeatureCollection;
 
-    constructor(name, description, server, producer, defaultLocation, enumerable) {
+    constructor(name, description, server, producer, timestep, defaultLocation, enumerable) {
         this.name = name;
         this.description = description;
         this.server = server;
         this.producer = producer;
+        this.timestep = timestep;
         this.defaultLocation = defaultLocation;
         this.enumerable = enumerable;
     }
@@ -334,7 +369,7 @@ class GeoJSONCollection implements Collection {
         function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextTokenRow) : String {
             var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
                           '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) +
-                          '&format=json&missingtext=null';
+                          '&format=json&missingtext=null' + collection.timestep;
             console.debug(request);
 
             return request;
@@ -425,9 +460,9 @@ class GeoJSONCollection implements Collection {
                                     }
                                     else
                                         console.debug('Filt',nextTokenRow.nextToken,param,data[param]);
-                                }
 
-                                N++;
+                                    N++;
+                                }
                             });
 
                             setTimeout(nextRow, 5);
