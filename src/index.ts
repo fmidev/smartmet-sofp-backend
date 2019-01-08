@@ -356,8 +356,13 @@ class GeoJSONCollection implements Collection {
             }
 
             // Adjust max number of rows and nextToken to the start of first row for timeseries
+            //
+            // Note: currently data must be fetched starting from 1'st row, because number of locations
+            // (i.e. number of values nParams * nLocations) per row is unknown
+            //
+            // nextTokenRow.row = Math.floor(nextTokenRow.nextToken / nParams);
 
-            nextTokenRow.row = Math.floor(nextTokenRow.nextToken / nParams);
+            nextTokenRow.row = 0;
             nextTokenRow.curToken = nextTokenRow.row * nParams;
             var n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
             nextTokenRow.limit = Math.floor(n / nParams) + (((n % nParams) > 0) ? 1 : 0);
