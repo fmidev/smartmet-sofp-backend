@@ -7,7 +7,7 @@ let SofpSmartmetBackend = new Backend('SofpSmartmetBackend');
 // Load configuration file
 
 const fs = require('fs');
-var readStream = fs.createReadStream('cnf/smartmet.json');
+var readStream = fs.createReadStream('backends/smartmet-sofp-backend/cnf/smartmet.json');
 var buf = '';
 
 readStream.on('data', (chunk) => {
