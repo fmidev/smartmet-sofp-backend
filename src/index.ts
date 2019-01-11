@@ -1,4 +1,4 @@
-import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter} from 'sofp-lib';
+import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, Property} from 'sofp-lib';
 
 import * as _ from 'lodash';
 
@@ -157,6 +157,20 @@ class GeoJSONCollection implements Collection {
     enumerable : boolean;
     defaultLocation : string;
     data : GeoJSONFeatureCollection;
+
+    properties : Property [] = [{
+        name: 'Time',
+        type: 'string',
+        description: 'Data target time'
+    },{
+        name: 'ParameterName',
+        type: 'string',
+        description: 'Name of parameter'
+    },{
+        name: 'ParameterValue',
+        type: 'number',
+        description: 'Value of parameter'
+    }];
 
     constructor(name, description, server, producer, timestep, defaultLocation, enumerable) {
         this.name = name;
