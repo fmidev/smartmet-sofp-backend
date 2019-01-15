@@ -170,6 +170,10 @@ class GeoJSONCollection implements Collection {
         name: 'ParameterValue',
         type: 'number',
         description: 'Value of parameter'
+    },{
+        name: 'Place',
+        type: 'string',
+        description: 'Data target location name'
     }];
 
     constructor(name, description, server, producer, timestep, defaultLocation, enumerable) {
@@ -455,8 +459,10 @@ class GeoJSONCollection implements Collection {
                                 // Without 'timestep' timeseries may return less values than coordinates when there are missing (N/A)
                                 // values (e.g. minute resolution observations available for only some of the stations).
                                 //
-                                var numValues = data[param].length;
-                                var numCoords = row['lon'].length;
+                                var arrayValue = _.isArray(data[param]);
+                                var arrayCoord = _.isArray(row['lon']);
+                                var numValues = arrayValue ? data[param].length : 1;
+                                var numCoords = arrayCoord ? row['lon'].length : 1;
                                 var valIdx = 0;
 
                                 if (numValues != numCoords) {
@@ -469,9 +475,9 @@ class GeoJSONCollection implements Collection {
                                     if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
                                         item.feature.properties['gml_id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
                                         item.feature.properties['ParameterName'] = paramMap[param];
-                                        item.feature.properties['ParameterValue'] = data[param][valIdx];
-                                        item.feature.geometry.coordinates[0] = row['lon'][valIdx];
-                                        item.feature.geometry.coordinates[1] = row['lat'][valIdx];
+                                        item.feature.properties['ParameterValue'] = arrayValue ? data[param][valIdx] : data[param];
+                                        item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                        item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
 
                                         item.nextToken = String(++nextTokenRow.nextToken);
 
@@ -479,7 +485,7 @@ class GeoJSONCollection implements Collection {
                                             outputCount++;
                                         }
                                         else
-                                            console.debug('Filt',nextTokenRow.nextToken,param,data[param]);
+                                            console.debug('Filter',nextTokenRow.nextToken,param,arrayValue ? data[param][valIdx] : data[param]);
                                     }
 
                                     valIdx++;
