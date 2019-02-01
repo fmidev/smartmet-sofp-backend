@@ -297,7 +297,7 @@ class GeoJSONCollection implements Collection {
 
                 for (x = 0; x < width; x += xStep) {
                     for (y = 0; y < height; y += yStep) {
-                         dataRequestParameter += (delim + (y0 + y).toPrecision(5) + ',' + (x0 + x).toPrecision(5));
+                         dataRequestParameter += (delim + (y0 + y).toFixed(5) + ',' + (x0 + x).toFixed(5));
                          delim = ',';
                     }
                  }
