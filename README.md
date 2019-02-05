@@ -19,7 +19,7 @@ The step-by-step is as follows:
   npm install && npm run build
   cd ..
   cd smartmet-sofp-backend
-  (edit configuration file data/smartmet.json; configure smartmet-server url and producer names)
+  (edit configuration file cnf/smartmet.json; configure smartmet-server url and collections)
   npm start
 
 ## Packaging
