@@ -1,8 +1,28 @@
 {
   "server" : "http://localhost:8080",
   "defaultlocation": "&keyword=ajax_fi_all",
-  "innumerabledataproducers" : [ "hirlam", "harmonie_scandinavia_surface" ],
-  "enumerabledataproducers" : [
-                               { "timesteps" : [ "1m", "10m", "1h" ], "producers" : [ "opendata" ] }
-                              ]
+  "innumerabledatacollections" : [
+                                  {
+                                   "name" : "hirlam",
+                                   "description" : "FMI hirlam surface forecast data.",
+                                   "defaultparameters" : "GeopHeight,Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,WindUMS,WindVMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,LowCloudCover,MediumCloudCover,HighCloudCover,Precipitation1h,PrecipitationAmount,RadiationGlobalAccumulation,RadiationLWAccumulation,RadiationNetSurfaceLWAccumulation,RadiationNetSurfaceSWAccumulation,RadiationDiffuseAccumulation,LandSeaMask"
+                                  },
+                                  {
+                                   "name" : "harmonie_scandinavia_surface",
+                                   "description" : "FMI harmonie scandinavia surface forecast data.",
+                                   "defaultparameters" : "GeopHeight,Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,WindUMS,WindVMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,LowCloudCover,MediumCloudCover,HighCloudCover,Precipitation1h,PrecipitationAmount,RadiationGlobalAccumulation,RadiationLWAccumulation,RadiationNetSurfaceLWAccumulation,RadiationNetSurfaceSWAccumulation,RadiationDiffuseAccumulation,LandSeaMask"
+                                  }
+                                 ],
+  "enumerabledatacollections" : [
+                                 {
+                                  "collections" : [
+                                                   {
+                                                    "name" : "opendata",
+                                                    "description" : "FMI observation data.",
+                                                    "defaultparameters" : "Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,Precipitation1h,PrecipitationAmount"
+                                                   }
+                                                  ],
+                                  "timesteps" : [ "1m", "10m", "1h" ]
+                                 }
+                                ]
 }
