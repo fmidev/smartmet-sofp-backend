@@ -51,10 +51,20 @@ readStream.on('data', (chunk) => {
                 }
 
                 var name = collection.name;
+                var title = collection.name;
                 var description = name + ' data by FMI.';
                 var descriptionGiven = false;
                 var defaultParameters = '';
                 var reportParameters = true;
+
+                if (_.has(collection,'title')) {
+                    if (!_.isString(collection.title)) {
+                        throw new Error('innumerabledatacollections: \'title\' must be a string');
+                    }
+                    else if (collection.title != '') {
+                        title = collection.title;
+                    }
+                }
 
                 if (_.has(collection,'description')) {
                     if (!_.isString(collection.description)) {
@@ -91,6 +101,7 @@ readStream.on('data', (chunk) => {
                 }
 
                 SofpSmartmetBackend.collections.push(new GeoJSONCollection(name,
+                                                                           title,
                                                                            description,
                                                                            server,
                                                                            name,
@@ -147,10 +158,20 @@ readStream.on('data', (chunk) => {
                         }
 
                         var name = collection.name;
+                        var title = collection.name;
                         var description = name + timeStepName + ' data by FMI.';
                         var descriptionGiven = false;
                         var defaultParameters = '';
                         var reportParameters = true;
+
+                        if (_.has(collection,'title')) {
+                            if (!_.isString(collection.title)) {
+                                throw new Error('innumerabledatacollections: \'title\' must be a string');
+                            }
+                            else if (collection.title != '') {
+                                title = collection.title;
+                            }
+                        }
 
                         if (_.has(collection,'description')) {
                             if (!_.isString(collection.description)) {
@@ -187,6 +208,7 @@ readStream.on('data', (chunk) => {
                         }
 
                         SofpSmartmetBackend.collections.push(new GeoJSONCollection(name + timeStepSuffix,
+                                                                                   title,
                                                                                    description,
                                                                                    server,
                                                                                    name,
@@ -239,6 +261,7 @@ interface DataRequestParameter {
 
 class GeoJSONCollection implements Collection {
     name : string;
+    title : string;
     description : string;
     links : Link[] = [];
 
@@ -268,8 +291,9 @@ class GeoJSONCollection implements Collection {
         description: 'Data target location name'
     }];
 
-    constructor(name, description, server, producer, timestep, defaultLocation, defaultParameters, enumerable) {
+    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultParameters, enumerable) {
         this.name = name;
+        this.title = title;
         this.description = description;
         this.server = server;
         this.producer = producer;
