@@ -208,7 +208,7 @@ readStream.on('data', (chunk) => {
                         }
 
                         SofpSmartmetBackend.collections.push(new GeoJSONCollection(name + timeStepSuffix,
-                                                                                   title,
+                                                                                   title + timeStepName,
                                                                                    description,
                                                                                    server,
                                                                                    name,
