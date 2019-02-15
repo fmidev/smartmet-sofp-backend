@@ -239,7 +239,7 @@ interface GeoJSONGeometry {
 
 interface GeoJSONFeature {
     type : string;
-    properties : { gml_id: String };
+    properties : { id: String };
     geometry: GeoJSONGeometry;
 };
 
