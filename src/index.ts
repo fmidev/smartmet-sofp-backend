@@ -278,11 +278,11 @@ class GeoJSONCollection implements Collection {
         type: 'string',
         description: 'Data target time'
     },{
-        name: 'ParameterName',
+        name: 'observedPropertyName',
         type: 'string',
         description: 'Name of parameter'
     },{
-        name: 'ParameterValue',
+        name: 'result',
         type: 'number',
         description: 'Value of parameter'
     },{
@@ -366,7 +366,7 @@ class GeoJSONCollection implements Collection {
                 if (propFilter && (_.keys(propFilter.parameters.properties).indexOf(requestParameter.propertyName) >= 0)) {
                     // To handle request with same data parameter multiple times, collect parameter names into a map with unique alias name
                     //
-                    if (requestParameter.propertyName == 'parametername') {
+                    if (requestParameter.propertyName == 'observedpropertyname') {
                         _.forEach(decodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]).split(','), (param) => {
                             var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
                             paramMap[alias] = param;
@@ -457,10 +457,12 @@ class GeoJSONCollection implements Collection {
 
             const dataRequestParameterMap = new Map([
                 [
-                 'parametername', new OptionalDataRequestParameter(
-                                                                   '&param=lat,lon,utctime as Time', 'parametername',
-                                                                   extractPropertyFilter, collection.defaultParameters
-                                                                  )
+                 'observedpropertyname',
+                 new OptionalDataRequestParameter(
+                                                  '&param=lat,lon,utctime as resultTime,origintime as phenomenonTime',
+                                                  'observedpropertyname',
+                                                  extractPropertyFilter, collection.defaultParameters
+                                                 )
                 ]
                ,[ 'time', new RequiredDataRequestParameter('&time=', 'time', extractTimeFilter) ]
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter) ]
@@ -481,7 +483,7 @@ class GeoJSONCollection implements Collection {
                 var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
 
                 if (!dataRequestParameter) {
-                    // Note: currently the only optional parameter (ParameterName) must have nonempty default value
+                    // Note: currently the only optional parameter (observedPropertyName) must have nonempty default value
                     // if (requestParameter instanceof RequiredDataRequestParameter) {
 
                     if (! (requestParameter instanceof RequiredGroupDataRequestParameter)) {
@@ -495,9 +497,9 @@ class GeoJSONCollection implements Collection {
 
                     dataRequestParameters += dataRequestParameter;
 
-                    if (parameterName == 'parametername') {
+                    if (parameterName == 'observedpropertyname') {
                         nParams = (((dataRequestParameter.match(/,/g) || []).length) + 1);
-                        nParams += ((dataRequestParameter.match(/%2C/g) || []).length) - 3; // -3; lat,lon,utctime
+                        nParams += ((dataRequestParameter.match(/%2C/g) || []).length) - 4; // -4; lat,lon,utctime,origintime
                     }
                 }
             }
@@ -578,7 +580,9 @@ class GeoJSONCollection implements Collection {
                         if ((idx < rows.length) && (outputCount < limit)) {
                             let item = new Item();
                             item.feature = new Feature();
+                            item.feature.type = 'Feature';
                             item.feature.properties = { };
+                            item.feature.properties['observationType'] = 'MeasureObservation';
                             item.feature.geometry = new Geometry();
                             var row = rows[idx++];
                             var data = { };
@@ -586,7 +590,7 @@ class GeoJSONCollection implements Collection {
                             nextTokenRow.row++;
 
                             Object.keys(row).forEach((col) => {
-                                if (col == 'Time') {
+                                if ((col == 'phenomenonTime') || (col == 'resultTime'))  {
                                     item.feature.properties[col] = row[col];
                                 }
                                 else if ((col != 'lat') && (col != 'lon')) {
@@ -612,9 +616,9 @@ class GeoJSONCollection implements Collection {
 
                                 while ((valIdx < numValues) && (outputCount < limit)) {
                                     if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
-                                        item.feature.properties['gml_id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
-                                        item.feature.properties['ParameterName'] = paramMap[param];
-                                        item.feature.properties['ParameterValue'] = arrayValue ? data[param][valIdx] : data[param];
+                                        item.feature.properties['id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
+                                        item.feature.properties['observedPropertyName'] = paramMap[param];
+                                        item.feature.properties['result'] = arrayValue ? data[param][valIdx] : data[param];
                                         item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
                                         item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
 
@@ -659,7 +663,7 @@ class GeoJSONCollection implements Collection {
     getFeatureById(id : string) : Promise<Feature> {
         var ret = new Promise((resolve) => {
             setTimeout(() => {
-                var feature = _.find(this.data.features, f => f.properties.gml_id === id);
+                var feature = _.find(this.data.features, f => f.properties.id === id);
                 resolve(feature);
             }, 5);
         });
