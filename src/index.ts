@@ -21,20 +21,8 @@ readStream.on('data', (chunk) => {
         if ((!_.has(conf, 'server')) || (!_.isString(conf.server)) || (conf.server == '')) {
             throw new Error('\'server\' must be an nonempty string (host:port)');
         }
-        var server = conf.server;
 
-	// Default locations for enumerable data
-
-        var defaultLocation = '&keyword=ajax_fi_all';
-        if (_.has(conf, 'defaultlocation')) {
-            if ((!_.isString(conf.defaultlocation)) || (conf.defaultlocation == '')) {
-                throw new Error('\'defaultlocation\' must be a nonempty string (&locationparam=value)');
-            }
-
-            defaultLocation = conf.defaultlocation;
-        }
-
-        // Innumerable data collections
+        // Innumerable (forecast) data collections
 
         if (_.has(conf, 'innumerabledatacollections')) {
             if (!_.isArray(conf.innumerabledatacollections)) {
@@ -50,69 +38,57 @@ readStream.on('data', (chunk) => {
                     throw new Error('innumerabledatacollections: \'name\' must be a nonempty string');
                 }
 
-                var name = collection.name;
-                var title = collection.name;
-                var description = name + ' data by FMI.';
-                var descriptionGiven = false;
-                var defaultParameters = '';
-                var reportParameters = true;
-
                 if (_.has(collection,'title')) {
-                    if (!_.isString(collection.title)) {
-                        throw new Error('innumerabledatacollections: \'title\' must be a string');
-                    }
-                    else if (collection.title != '') {
-                        title = collection.title;
-                    }
-                }
-
-                if (_.has(collection,'description')) {
-                    if (!_.isString(collection.description)) {
-                        throw new Error('innumerabledatacollections: \'description\' must be a string');
-                    }
-                    else if (collection.description != '') {
-                        description = collection.description;
-                        descriptionGiven = true;
-                    }
-                }
-
-                if (_.has(collection,'defaultparameters')) {
-                    if (!_.isString(collection.defaultparameters)) {
-                        throw new Error('innumerabledatacollections: \'defaultparameters\' must be a string');
-                    }
-                    else {
-                        if (_.has(collection,'reportparameters')) {
-                            if (!_.isBoolean(collection.reportparameters)) {
-                                throw new Error('innumerabledatacollections: \'reportparameters\' must be a boolean');
-                            }
-
-                            reportParameters = collection.reportparameters;
-                        }
-
-                        defaultParameters = collection.defaultparameters;
+                    if ((!_.isString(collection.title)) || (collection.title == '')) {
+                        throw new Error('innumerabledatacollections: \'title\' must be a nonempty string');
                     }
                 }
                 else {
-                    reportParameters = false;
+                    collection.title = collection.name;
                 }
 
-                if (reportParameters) {
-                    description += (' Default parameter set contains following parameters: ' + defaultParameters);
+                if (_.has(collection,'description')) {
+                    if ((!_.isString(collection.description)) || (collection.description == '')) {
+                        throw new Error('innumerabledatacollections: \'description\' must be a nonempty string');
+                    }
+                }
+                else {
+                    collection.description = collection.name + ' data by FMI.';
                 }
 
-                SofpSmartmetBackend.collections.push(new GeoJSONCollection(name,
-                                                                           title,
-                                                                           description,
-                                                                           server,
-                                                                           name,
+                if ((!_.isString(collection.defaultlocation)) || (collection.defaultlocation == '')) {
+                    throw new Error('innumerabledatacollections: \'defaultlocation\' must be a nonempty string (locationparam=value)');
+                }
+
+                if (_.has(collection,'defaulttime')) {
+                    if ((!_.isString(collection.defaulttime)) || (collection.defaulttime == '')) {
+                        throw new Error('innumerabledatacollections: \'defaulttime\' must be a nonempty string (timeparam=value)');
+                    }
+                }
+                else {
+                   collection.defaulttime = 'starttime=data';
+                }
+
+                if ((!_.isString(collection.defaultparameters)) || (collection.defaultparameters == '')) {
+                    throw new Error('innumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
+                }
+
+                collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
+
+                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name,
+                                                                           collection.title,
+                                                                           collection.description,
+                                                                           conf.server,
+                                                                           collection.name,
                                                                            '',
-                                                                           '',
-                                                                           defaultParameters,
+                                                                           collection.defaultlocation,
+                                                                           collection.defaulttime,
+                                                                           collection.defaultparameters,
                                                                            false));
             });
         }
 
-        // Enumerable data collections
+        // Enumerable (observation) data collections
 
         if (_.has(conf, 'enumerabledatacollections')) {
             if (!_.isArray(conf.enumerabledatacollections)) {
@@ -157,64 +133,57 @@ readStream.on('data', (chunk) => {
                             throw new Error('enumerabledatacollections: \'name\' must be a nonempty string');
                         }
 
-                        var name = collection.name;
-                        var title = collection.name;
-                        var description = name + timeStepName + ' data by FMI.';
-                        var descriptionGiven = false;
-                        var defaultParameters = '';
-                        var reportParameters = true;
-
                         if (_.has(collection,'title')) {
-                            if (!_.isString(collection.title)) {
-                                throw new Error('innumerabledatacollections: \'title\' must be a string');
-                            }
-                            else if (collection.title != '') {
-                                title = collection.title;
-                            }
-                        }
-
-                        if (_.has(collection,'description')) {
-                            if (!_.isString(collection.description)) {
-                                throw new Error('enumerabledatacollections: \'description\' must be a string');
-                            }
-                            else if (collection.description != '') {
-                                description = collection.description;
-                                descriptionGiven = true;
-                            }
-                        }
-
-                        if (_.has(collection,'defaultparameters')) {
-                            if (!_.isString(collection.defaultparameters)) {
-                                throw new Error('enumerabledatacollections: \'defaultparameters\' must be a string');
-                            }
-                            else {
-                                if (_.has(collection,'reportparameters')) {
-                                    if (!_.isBoolean(collection.reportparameters)) {
-                                        throw new Error('enumerabledatacollections: \'reportparameters\' must be a boolean');
-                                    }
-
-                                    reportParameters = collection.reportparameters;
-                                }
-
-                                defaultParameters = collection.defaultparameters;
+                            if ((!_.isString(collection.title)) || (collection.title == '')) {
+                                throw new Error('enumerabledatacollections: \'title\' must be a nonempty string');
                             }
                         }
                         else {
-                            reportParameters = false;
+                            collection.title = collection.name;
                         }
 
-                        if (reportParameters) {
-                            description += (' Default parameter set contains following parameters: ' + defaultParameters);
+                        if (_.has(collection,'description')) {
+                            if ((!_.isString(collection.description)) || (collection.description == '')){
+                                throw new Error('enumerabledatacollections: \'description\' must be a nonempty string');
+                            }
+                        }
+                        else {
+                            collection.description = collection.name + timeStepName + ' data by FMI.';
                         }
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(name + timeStepSuffix,
-                                                                                   title + timeStepName,
-                                                                                   description,
-                                                                                   server,
-                                                                                   name,
+                        if (_.has(collection,'defaultlocation')) {
+                            if ((!_.isString(collection.defaultlocation)) || (collection.defaultlocation == '')) {
+                                throw new Error('enumerabledatacollections: \'defaultlocation\' must be a nonempty string (locationparam=value)');
+                            }
+                        }
+                        else {
+                            collection.defaultlocation = 'keyword=ajax_fi_all';
+                        }
+
+                        if (_.has(collection,'defaulttime')) {
+                            if ((!_.isString(collection.defaulttime)) || (collection.defaulttime == '')) {
+                                throw new Error('enumerabledatacollections: \'defaulttime\' must be a nonempty string (timeparam=value)');
+                            }
+                        }
+                        else {
+                           collection.defaulttime = 'starttime=-24h';
+                        }
+
+                        if ((!_.isString(collection.defaultparameters)) || (collection.defaultparameters == '')) {
+                            throw new Error('enumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
+                        }
+
+                        collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
+
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix,
+                                                                                   collection.title + timeStepName,
+                                                                                   collection.description,
+                                                                                   conf.server,
+                                                                                   collection.name,
                                                                                    timeStep,
-                                                                                   defaultLocation,
-                                                                                   defaultParameters,
+                                                                                   collection.defaultlocation,
+                                                                                   collection.defaulttime,
+                                                                                   collection.defaultparameters,
                                                                                    true));
                     });
                 });
@@ -270,6 +239,7 @@ class GeoJSONCollection implements Collection {
     timestep : string;
     enumerable : boolean;
     defaultLocation : string;
+    defaultTime : string;
     defaultParameters : string;
     data : GeoJSONFeatureCollection;
 
@@ -291,7 +261,7 @@ class GeoJSONCollection implements Collection {
         description: 'Data target location name'
     }];
 
-    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultParameters, enumerable) {
+    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable) {
         this.name = name;
         this.title = title;
         this.description = description;
@@ -299,6 +269,7 @@ class GeoJSONCollection implements Collection {
         this.producer = producer;
         this.timestep = timestep;
         this.defaultLocation = defaultLocation;
+        this.defaultTime = defaultTime;
         this.defaultParameters = defaultParameters;
         this.enumerable = enumerable;
     }
@@ -316,12 +287,12 @@ class GeoJSONCollection implements Collection {
             required : Boolean;
             defaultValue : String;
 
-            constructor(parameterName : String, propertyName : String, filterFunction : Function) {
+            constructor(parameterName : String, propertyName : String, filterFunction : Function, defaultValue : String) {
                 this.parameterName = parameterName;
                 this.propertyName = propertyName;
                 this.filterFunction = filterFunction;
                 this.required = true;
-                this.defaultValue = null;
+                this.defaultValue = defaultValue;
             }
         }
         class RequiredGroupDataRequestParameter implements DataRequestParameter {
@@ -332,13 +303,13 @@ class GeoJSONCollection implements Collection {
             required : Boolean;
             defaultValue : String;
 
-            constructor(groupName : String, parameterName : String, propertyName : String, filterFunction : Function) {
+            constructor(groupName : String, parameterName : String, propertyName : String, filterFunction : Function, defaultValue : String) {
                 this.parameterName = parameterName;
                 this.propertyName = propertyName;
                 this.groupName = groupName;
                 this.filterFunction = filterFunction;
                 this.required = true;
-                this.defaultValue = null;
+                this.defaultValue = defaultValue;
             }
         }
         class OptionalDataRequestParameter implements DataRequestParameter {
@@ -405,10 +376,17 @@ class GeoJSONCollection implements Collection {
                                "&endtime=" + propFilter.parameters.momentEnd.utc().format();
                     }
                 }
+                else if (_.isString(requestParameter.defaultValue) && (requestParameter.defaultValue != '')) {
+                    return '&' + encodeURIComponent(requestParameter.defaultValue);
+                }
             }
             function pointsWithinBBOX(BBOXCorners : number[]) : String {
                 // Return evenly spaced points within the bbox
                 //
+                if (BBOXCorners.length != 4) {
+                   throw new Error('Invalid bbox: ' + _.map(BBOXCorners).join(','));
+                }
+
                 var nPoints = 100;
 
                 var dx = Math.abs(BBOXCorners[2] - BBOXCorners[0]);
@@ -449,6 +427,21 @@ class GeoJSONCollection implements Collection {
                         return pointsWithinBBOX(propFilter.parameters.coords);
                     }
                 }
+                else if (requestParameter.defaultValue.substring(0,5) == 'bbox=') {
+                    if (requestParameter.propertyName == 'bbox') {
+                        return requestParameter.parameterName + requestParameter.defaultValue.substring(5);
+                    }
+                    else {
+                        var numStrArr = requestParameter.defaultValue.substring(5).split(',');
+                        var BBOX = [];
+
+                        for (var i = 0, len = numStrArr.length; (i < len); i++) {
+                            BBOX.push(Number(numStrArr[i]));
+                        }
+
+                        return pointsWithinBBOX(BBOX);
+                    }
+                }
             }
 
             // data backend request parameters extracted from filters
@@ -464,9 +457,9 @@ class GeoJSONCollection implements Collection {
                                                   extractPropertyFilter, collection.defaultParameters
                                                  )
                 ]
-               ,[ 'time', new RequiredDataRequestParameter('&time=', 'time', extractTimeFilter) ]
-               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter) ]
-               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&place=', 'place', extractPropertyFilter) ]
+               ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
+               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
+               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&place=', 'place', extractPropertyFilter, null) ]
             ]);
 
             var parameterGroups = new Set();
@@ -483,10 +476,9 @@ class GeoJSONCollection implements Collection {
                 var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
 
                 if (!dataRequestParameter) {
-                    // Note: currently the only optional parameter (observedPropertyName) must have nonempty default value
-                    // if (requestParameter instanceof RequiredDataRequestParameter) {
-
-                    if (! (requestParameter instanceof RequiredGroupDataRequestParameter)) {
+                    if (requestParameter instanceof OptionalDataRequestParameter) {
+                        // Optional parameters must have nonempty default value; should not end up here
+                        //
                         throw new Error('Parameter \'' + requestParameter.propertyName + '\' is required');
                     }
                 }
@@ -505,15 +497,11 @@ class GeoJSONCollection implements Collection {
             }
 
             if (parameterGroups.size > 0) {
-                if (collection.enumerable) {
-                    // Using default location(s) for enumerable data
-                    //
-                    dataRequestParameters += collection.defaultLocation;
-                }
-                else {
-                    throw new Error('Parameter of parameter group \'' + parameterGroups.entries().next().value[0] + '\' is required');
-                }
+                // Default location was not bbox or place; use as is
+                //
+                dataRequestParameters += ('&' + collection.defaultLocation);
             }
+
             // Adjust max number of rows and nextToken to the start of first row for timeseries
             //
             // Note: currently data must be fetched starting from 1'st row, because number of locations

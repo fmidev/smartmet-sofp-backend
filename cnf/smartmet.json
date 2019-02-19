@@ -1,15 +1,16 @@
 {
   "server" : "http://localhost:8080",
-  "defaultlocation": "&keyword=ajax_fi_all",
   "innumerabledatacollections" : [
                                   {
                                    "name" : "hirlam",
                                    "description" : "FMI hirlam surface forecast data.",
+                                   "defaultlocation" : "bbox=19.0999994448403,59.6999982183814,31.6999990684267,70.099997907566",
                                    "defaultparameters" : "GeopHeight,Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,WindUMS,WindVMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,LowCloudCover,MediumCloudCover,HighCloudCover,Precipitation1h,PrecipitationAmount,RadiationGlobalAccumulation,RadiationLWAccumulation,RadiationNetSurfaceLWAccumulation,RadiationNetSurfaceSWAccumulation,RadiationDiffuseAccumulation,LandSeaMask"
                                   },
                                   {
                                    "name" : "harmonie_scandinavia_surface",
                                    "description" : "FMI harmonie scandinavia surface forecast data.",
+                                   "defaultlocation" : "bbox=-15.3369968389954,51.4660455304571,49.662,74.0891692400927",
                                    "defaultparameters" : "GeopHeight,Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,WindUMS,WindVMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,LowCloudCover,MediumCloudCover,HighCloudCover,Precipitation1h,PrecipitationAmount,RadiationGlobalAccumulation,RadiationLWAccumulation,RadiationNetSurfaceLWAccumulation,RadiationNetSurfaceSWAccumulation,RadiationDiffuseAccumulation,LandSeaMask"
                                   }
                                  ],
@@ -19,7 +20,9 @@
                                                    {
                                                     "name" : "opendata",
                                                     "description" : "FMI observation data.",
-                                                    "defaultparameters" : "Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,WeatherSymbol3,Precipitation1h,PrecipitationAmount"
+                                                    "defaultlocation" : "keyword=ajax_fi_all",
+                                                    "defaulttime" : "starttime=-24h",
+                                                    "defaultparameters" : "Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,Precipitation1h,PrecipitationAmount"
                                                    }
                                                   ],
                                   "timesteps" : [ "1m", "10m", "1h" ]
