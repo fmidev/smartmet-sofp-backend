@@ -101,6 +101,7 @@ readStream.on('data', (chunk) => {
                 }
 
                 var timeSteps = [ '' ];
+                var reportDefaultParams = true;
 
                 if (_.has(collections,'timesteps')) {
                     if (!_.isArray(collections.timesteps)) {
@@ -169,11 +170,15 @@ readStream.on('data', (chunk) => {
                            collection.defaulttime = 'starttime=-24h';
                         }
 
-                        if ((!_.isString(collection.defaultparameters)) || (collection.defaultparameters == '')) {
-                            throw new Error('enumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
-                        }
+                        if (reportDefaultParams) {
+                            if ((!_.isString(collection.defaultparameters)) || (collection.defaultparameters == '')) {
+                                throw new Error('enumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
+                            }
 
-                        collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
+                            collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
+
+                            reportDefaultParams = false;
+                        } 
 
                         SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix,
                                                                                    collection.title + timeStepName,
@@ -244,9 +249,21 @@ class GeoJSONCollection implements Collection {
     data : GeoJSONFeatureCollection;
 
     properties : Property [] = [{
+        name: 'observationType',
+        type: 'string',
+        description: 'Feature type'
+    },{
+        name: 'id',
+        type: 'string',
+        description: 'Feature id'
+    },{
         name: 'Time',
         type: 'string',
         description: 'Data target time'
+    },{
+        name: 'phenomenonTime',
+        type: 'string',
+        description: 'Data origin time'
     },{
         name: 'observedPropertyName',
         type: 'string',
@@ -255,6 +272,10 @@ class GeoJSONCollection implements Collection {
         name: 'result',
         type: 'number',
         description: 'Value of parameter'
+    },{
+        name: 'resultTime',
+        type: 'string',
+        description: 'Time instant'
     },{
         name: 'Place',
         type: 'string',
