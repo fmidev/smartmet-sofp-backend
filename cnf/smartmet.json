@@ -22,7 +22,7 @@
                                                     "description" : "FMI observation data.",
                                                     "defaultlocation" : "keyword=ajax_fi_all",
                                                     "defaulttime" : "starttime=-24h",
-                                                    "defaultparameters" : "Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,MaximumWind,WindGust,DewPoint,TotalCloudCover,Precipitation1h,PrecipitationAmount"
+                                                    "defaultparameters" : "Temperature,Pressure,Humidity,WindDirection,WindSpeedMS,WindGust,DewPoint,TotalCloudCover,Precipitation1h"
                                                    }
                                                   ],
                                   "timesteps" : [ "1m", "10m", "1h" ]
