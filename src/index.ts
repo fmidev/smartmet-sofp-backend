@@ -263,7 +263,7 @@ class GeoJSONCollection implements Collection {
     },{
         name: 'phenomenonTime',
         type: 'string',
-        description: 'Data origin time'
+        description: 'Data time instant'
     },{
         name: 'observedPropertyName',
         type: 'string',
@@ -275,7 +275,7 @@ class GeoJSONCollection implements Collection {
     },{
         name: 'resultTime',
         type: 'string',
-        description: 'Time instant'
+        description: 'Result time instant'
     },{
         name: 'Place',
         type: 'string',
@@ -468,7 +468,7 @@ class GeoJSONCollection implements Collection {
                 [
                  'observedpropertyname',
                  new OptionalDataRequestParameter(
-                                                  '&param=lat,lon,utctime as resultTime,origintime as phenomenonTime',
+                                                  '&param=lat,lon,utctime as phenomenonTime,origintime as resultTime',
                                                   'observedpropertyname',
                                                   extractPropertyFilter, collection.defaultParameters
                                                  )
@@ -545,7 +545,7 @@ class GeoJSONCollection implements Collection {
         function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextTokenRow) : String {
             var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
                           '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) +
-                          '&format=json&missingtext=null' + collection.timestep;
+                          '&format=json&missingtext=null&tz=UTC' + collection.timestep;
             console.debug(request);
 
             return request;
@@ -603,7 +603,10 @@ class GeoJSONCollection implements Collection {
 
                             Object.keys(row).forEach((col) => {
                                 if ((col == 'phenomenonTime') || (col == 'resultTime'))  {
-                                    item.feature.properties[col] = row[col];
+                                    // Use phenomenon time as result time for observations
+                                    //
+                                    var c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
+                                    item.feature.properties[col] = row[c];
                                 }
                                 else if ((col != 'lat') && (col != 'lon')) {
                                     data[col] = row[col];
