@@ -82,7 +82,7 @@ OGRFeature(hirlam):2
   [...]
   ```
 
-Please see [WFS3 usage demo](WFS3 usage demo.md) for python example.
+Please see [WFS3 usage demo](WFS3%20usage%20demo.md) for python example.
 
 ## Developing
 
