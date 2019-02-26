@@ -389,13 +389,8 @@ class GeoJSONCollection implements Collection {
                 if (propFilter) {
                     queryFilters.splice(queryFilters.indexOf(propFilter), 1);
  
-                    if (propFilter.parameters.momentStart.isSame(propFilter.parameters.momentEnd)) {
-                        return "&starttime=" + propFilter.parameters.momentStart.utc().format();
-                    }
-                    else {
-                        return "&starttime=" + propFilter.parameters.momentStart.utc().format() +
-                               "&endtime=" + propFilter.parameters.momentEnd.utc().format();
-                    }
+                    return "&starttime=" + propFilter.parameters.momentStart.utc().format() +
+                           "&endtime=" + propFilter.parameters.momentEnd.utc().format();
                 }
                 else if (_.isString(requestParameter.defaultValue) && (requestParameter.defaultValue != '')) {
                     return '&' + encodeURIComponent(requestParameter.defaultValue);
@@ -448,7 +443,7 @@ class GeoJSONCollection implements Collection {
                         return pointsWithinBBOX(propFilter.parameters.coords);
                     }
                 }
-                else if (requestParameter.defaultValue.substring(0,5) == 'bbox=') {
+                else if (requestParameter.defaultValue && (requestParameter.defaultValue.substring(0,5) == 'bbox=')) {
                     if (requestParameter.propertyName == 'bbox') {
                         return requestParameter.parameterName + requestParameter.defaultValue.substring(5);
                     }
@@ -479,11 +474,12 @@ class GeoJSONCollection implements Collection {
                                                  )
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
-               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
                ,[ 'place', new RequiredGroupDataRequestParameter('location', '&place=', 'place', extractPropertyFilter, null) ]
+               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
             var parameterGroups = new Set();
+            var defaultLocation = collection.defaultLocation;
             var dataRequestParameters = '';
             var nParams : number = 0;
 
@@ -494,6 +490,12 @@ class GeoJSONCollection implements Collection {
             }
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
+                if ((requestParameter instanceof RequiredGroupDataRequestParameter) && requestParameter.defaultValue) {
+                    // Clear (if place was given) or (re)set default location when parsing bbox
+                    //
+                    requestParameter.defaultValue = defaultLocation;
+                }
+
                 var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
 
                 if (!dataRequestParameter) {
@@ -506,6 +508,7 @@ class GeoJSONCollection implements Collection {
                 else {
                     if (requestParameter instanceof RequiredGroupDataRequestParameter) {
                         parameterGroups.delete(requestParameter.groupName);
+                        defaultLocation = null;
                     }
 
                     dataRequestParameters += dataRequestParameter;
