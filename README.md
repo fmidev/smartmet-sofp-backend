@@ -25,7 +25,7 @@ All data requests can be filtered with default parameters property filters. Furt
 |Filter|Description|Example|
 |-|-|-|
 |[BBOX](https://cdn.rawgit.com/opengeospatial/WFS_FES/3.0.0-draft.1/docs/17-069.html#_parameter_bbox)| Area filter | http://beta.fmi.fi/data/3/wfs/sofp/collections/hirlam/items?bbox=19,59,20,60 |
-|place | Special filter to fetch data with a place name. If _place_ is given, other location filters are ignored. |http://beta.fmi.fi/data/3/wfs/sofp/collections/opendata_1m/items?place=kaisaniemi |
+|place | Special filter to fetch data with a place name. If _place_ is given, other location filters are ignored. One may add county name after place name separated by comma (for example Kumpula,Tampere) |http://beta.fmi.fi/data/3/wfs/sofp/collections/opendata_1m/items?place=kaisaniemi |
 |[time](https://cdn.rawgit.com/opengeospatial/WFS_FES/3.0.0-draft.1/docs/17-069.html#_parameter_time)| Time filter. May be one timestamp or time range.|http://beta.fmi.fi/data/3/wfs/sofp/collections/opendata_1m/items?time=2018-02-26T08:00:00Z/2018-02-26T09:00:00Z |
 |[limit](https://cdn.rawgit.com/opengeospatial/WFS_FES/3.0.0-draft.1/docs/17-069.html#_parameter_limit) | Number of responses returned (default 10) |http://beta.fmi.fi/data/3/wfs/sofp/collections/hirlam/items?bbox=19,59,20,60&limit=100 |
 |[Property filter](https://cdn.rawgit.com/opengeospatial/WFS_FES/3.0.0-draft.1/docs/17-069.html#_parameters_for_filtering_on_feature_properties) | Filter based on any property in the response |http://beta.fmi.fi/data/3/wfs/sofp/collections/hirlam/items?limit=100&place=kaisaniemi&observedPropertyName=WindSpeedMS&phenomenonTime=20190225T080000 |
