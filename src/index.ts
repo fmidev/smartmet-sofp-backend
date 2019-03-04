@@ -257,9 +257,9 @@ class GeoJSONCollection implements Collection {
         type: 'string',
         description: 'Feature id'
     },{
-        name: 'Time',
+        name: 'time',
         type: 'string',
-        description: 'Data target time'
+        description: 'Data target time instant or range'
     },{
         name: 'phenomenonTime',
         type: 'string',
@@ -277,9 +277,17 @@ class GeoJSONCollection implements Collection {
         type: 'string',
         description: 'Result time instant'
     },{
-        name: 'Place',
+        name: 'place',
         type: 'string',
-        description: 'Data target location name'
+        description: 'Data target location name(s)'
+    },{
+        name: 'latlon',
+        type: 'string',
+        description: 'Data target latlon coordinate(s)'
+    },{
+        name: 'lonlat',
+        type: 'string',
+        description: 'Data target lonlat coordinate(s)'
     }];
 
     constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable) {
@@ -459,6 +467,45 @@ class GeoJSONCollection implements Collection {
                     }
                 }
             }
+            function extractCoordinateFilter(requestParameter, queryFilters) : String {
+                var propFilter : Filter = _.find(queryFilters, { filterClass: 'PropertyFilter' });
+
+                if (propFilter && (_.keys(propFilter.parameters.properties).indexOf(requestParameter.propertyName) >= 0)) {
+                    var filter = requestParameter.parameterName;
+                    var nElem = 0;
+                    var nextCoordIsLat = (requestParameter.propertyName == 'latlon');
+                    var coords = propFilter.parameters.properties[requestParameter.propertyName].split(',');
+
+                    if ((coords.length < 2) || ((coords.length % 2) != 0)) {
+                        throw new Error('Invalid number of ' + requestParameter.propertyName + ' coordinate values: ' +
+                                        propFilter.parameters.properties[requestParameter.propertyName]);
+                    }
+
+                    _.forEach(coords, (coord) => {
+                        var coordOk = false;
+
+                        if (!isNaN(coord)) {
+                            var value = Number(coord);
+                            var minValue = (nextCoordIsLat ? -90 : -180);
+                            var maxValue = (nextCoordIsLat ? 90 : 180);
+
+                            coordOk = ((value >= minValue) && (value <= maxValue))
+                        }
+
+                        if (!coordOk) {
+                            throw new Error('Invalid ' + requestParameter.propertyName + ' coordinate value: ' + coord);
+                        }
+
+                        filter += (((nElem++ == 0) ? "" : ",") + coord);
+
+                        nextCoordIsLat = (!nextCoordIsLat);
+                    });
+
+                    delete propFilter.parameters.properties[requestParameter.propertyName];
+
+                    return filter;
+                }
+            }
 
             // data backend request parameters extracted from filters
             //
@@ -475,6 +522,8 @@ class GeoJSONCollection implements Collection {
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
                ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractPropertyFilter, null) ]
+               ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 'latlon', extractCoordinateFilter, null) ]
+               ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 'lonlat', extractCoordinateFilter, null) ]
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
@@ -491,7 +540,7 @@ class GeoJSONCollection implements Collection {
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
                 if ((requestParameter instanceof RequiredGroupDataRequestParameter) && requestParameter.defaultValue) {
-                    // Clear (if place was given) or (re)set default location when parsing bbox
+                    // Clear (if place or coordinate was given) or (re)set default location when parsing bbox
                     //
                     requestParameter.defaultValue = defaultLocation;
                 }
@@ -678,7 +727,7 @@ class GeoJSONCollection implements Collection {
     getFeatureById(id : string) : Promise<Feature> {
         var ret = new Promise((resolve) => {
             setTimeout(() => {
-                var feature = _.find(this.data.features, f => f.properties.id === id);
+                var feature = (_.isObject(this.data) ? _.find(this.data.features, f => f.properties.id === id) : null);
                 resolve(feature);
             }, 5);
         });
