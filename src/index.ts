@@ -474,7 +474,7 @@ class GeoJSONCollection implements Collection {
                                                  )
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
-               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&place=', 'place', extractPropertyFilter, null) ]
+               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractPropertyFilter, null) ]
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
