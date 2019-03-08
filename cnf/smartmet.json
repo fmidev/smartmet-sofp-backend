@@ -26,6 +26,18 @@
                                                    }
                                                   ],
                                   "timesteps" : [ "1m", "10m", "1h" ]
+                                 },
+                                 {
+                                  "collections" : [
+                                                   {
+                                                    "name" : "airquality",
+                                                    "description" : "FMI air quality observation data.",
+                                                    "defaultlocation" : "keyword=air_quality_urban",
+                                                    "defaulttime" : "starttime=-24h",
+                                                    "defaultparameters" : "SO2_PT1H_avg,NO_PT1H_avg,NO2_PT1H_avg,O3_PT1H_avg,TRSC_PT1H_avg,CO_PT1H_avg,PM10_PT1H_avg,PM25_PT1H_avg,AQINDEX_PT1H_avg"
+                                                   }
+                                                  ],
+                                  "timesteps" : [ "1h" ]
                                  }
                                 ]
 }
