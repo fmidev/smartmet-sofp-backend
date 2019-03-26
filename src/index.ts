@@ -400,6 +400,7 @@ class GeoJSONCollection implements Collection {
                     //
                     if (requestParameter.propertyName == 'observedpropertyname') {
                         _.forEach(decodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]).split(','), (param) => {
+                            param = param.trim();
                             var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
                             paramMap[alias] = param;
                             filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param) + ' as ' + alias);
@@ -415,6 +416,7 @@ class GeoJSONCollection implements Collection {
                 }
                 else if (_.isString(requestParameter.defaultValue) && (requestParameter.defaultValue != '')) {
                     _.forEach(decodeURIComponent(requestParameter.defaultValue).split(','), (param) => {
+                        param = param.trim();
                         var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
                         paramMap[alias] = param;
                         filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param) + ' as ' + alias);
