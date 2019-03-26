@@ -53,7 +53,7 @@ readStream.on('data', (chunk) => {
                     }
                 }
                 else {
-                    collection.description = collection.name + ' data by FMI.';
+                    collection.description = collection.name + ' data by FMI';
                 }
 
                 if ((!_.isString(collection.defaultlocation)) || (collection.defaultlocation == '')) {
@@ -73,18 +73,33 @@ readStream.on('data', (chunk) => {
                     throw new Error('innumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
                 }
 
-                collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
-
                 SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name,
                                                                            collection.title,
-                                                                           collection.description,
+                                                                           collection.description +
+                                                                           '. Default parameter set contains following parameters: ' +
+                                                                           collection.defaultparameters,
                                                                            conf.server,
                                                                            collection.name,
                                                                            '',
                                                                            collection.defaultlocation,
                                                                            collection.defaulttime,
                                                                            collection.defaultparameters,
+                                                                           false,
                                                                            false));
+
+                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + '_timeserie',
+                                                                           collection.title + ' time serie',
+                                                                           collection.description + ' in time serie format' +
+                                                                           '. Default parameter set contains following parameters: ' +
+                                                                           collection.defaultparameters,
+                                                                           conf.server,
+                                                                           collection.name,
+                                                                           '',
+                                                                           collection.defaultlocation,
+                                                                           collection.defaulttime,
+                                                                           collection.defaultparameters,
+                                                                           false,
+                                                                           true));
             });
         }
 
@@ -101,7 +116,7 @@ readStream.on('data', (chunk) => {
                 }
 
                 var timeSteps = [ '' ];
-                var reportDefaultParams = true;
+                var checkDefaultParams = true;
 
                 if (_.has(collections,'timesteps')) {
                     if (!_.isArray(collections.timesteps)) {
@@ -170,25 +185,40 @@ readStream.on('data', (chunk) => {
                            collection.defaulttime = 'starttime=-24h';
                         }
 
-                        if (reportDefaultParams) {
+                        if (checkDefaultParams) {
                             if ((!_.isString(collection.defaultparameters)) || (collection.defaultparameters == '')) {
                                 throw new Error('enumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
                             }
 
-                            collection.description += (' Default parameter set contains following parameters: ' + collection.defaultparameters);
-
-                            reportDefaultParams = false;
+                            checkDefaultParams = false;
                         } 
 
                         SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix,
                                                                                    collection.title + timeStepName,
-                                                                                   collection.description,
+                                                                                   collection.description +
+                                                                                   '. Default parameter set contains following parameters: ' +
+                                                                                   collection.defaultparameters,
                                                                                    conf.server,
                                                                                    collection.name,
                                                                                    timeStep,
                                                                                    collection.defaultlocation,
                                                                                    collection.defaulttime,
                                                                                    collection.defaultparameters,
+                                                                                   true,
+                                                                                   false));
+
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + '_timeserie',
+                                                                                   collection.title + timeStepName + ' time serie',
+                                                                                   collection.description  + ' in time serie format' +
+                                                                                   '. Default parameter set contains following parameters: ' +
+                                                                                   collection.defaultparameters,
+                                                                                   conf.server,
+                                                                                   collection.name,
+                                                                                   timeStep,
+                                                                                   collection.defaultlocation,
+                                                                                   collection.defaulttime,
+                                                                                   collection.defaultparameters,
+                                                                                   true,
                                                                                    true));
                     });
                 });
@@ -243,6 +273,7 @@ class GeoJSONCollection implements Collection {
     producer : string;
     timestep : string;
     enumerable : boolean;
+    timeserieoutput : boolean;
     defaultLocation : string;
     defaultTime : string;
     defaultParameters : string;
@@ -290,7 +321,7 @@ class GeoJSONCollection implements Collection {
         description: 'Data target lonlat coordinate(s)'
     }];
 
-    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable) {
+    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable, timeSerieOutput) {
         this.name = name;
         this.title = title;
         this.description = description;
@@ -301,6 +332,7 @@ class GeoJSONCollection implements Collection {
         this.defaultTime = defaultTime;
         this.defaultParameters = defaultParameters;
         this.enumerable = enumerable;
+        this.timeserieoutput = timeSerieOutput
     }
 
     executeQuery(query : Query) : FeatureStream {
@@ -584,8 +616,17 @@ class GeoJSONCollection implements Collection {
 
             nextTokenRow.row = 0;
             nextTokenRow.curToken = nextTokenRow.row * nParams;
-            var n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
-            nextTokenRow.limit = Math.floor(n / nParams) + (((n % nParams) > 0) ? 1 : 0);
+
+            if (collection.timeserieoutput) {
+                // Note: currently all data must be fetched because number of timesteps is unknown
+                //
+                nextTokenRow.limit = 0;
+            }
+            else {
+                var n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
+                nextTokenRow.limit = Math.floor(n / nParams) + (((n % nParams) > 0) ? 1 : 0);
+            }
+
             console.debug('nParams',nParams,'next',nextTokenRow.nextToken,'row',nextTokenRow.row,'cur',nextTokenRow.curToken,'lim',nextTokenRow.limit);
 
             return dataRequestParameters;
@@ -674,7 +715,7 @@ class GeoJSONCollection implements Collection {
 
                                 if (numValues != numCoords) {
                                     console.debug(paramMap[param] + ' value/coordinate count mismatch ' +
-                                                  item.feature.properties['Time'],numValues,numCoords);
+                                                  item.feature.properties['phenomenonTime'],numValues,numCoords);
                                     numValues = (numValues > numCoords ? numCoords : numValues);
                                 }
 
@@ -707,7 +748,115 @@ class GeoJSONCollection implements Collection {
                         }
                     }
 
-                    setTimeout(nextRow, 5);
+                    var items = { }
+                    var item = null;
+                    var nFeatures = 0;
+
+                    function nextTimeSerieRow() {
+                        if ((idx < rows.length) && (outputCount < limit)) {
+                            var row = rows[idx++];
+                            var data = { };
+                            var timeColumns = { }
+                            nextTokenRow.row++;
+
+                            Object.keys(row).forEach((col) => {
+                                if ((col == 'phenomenonTime') || (col == 'resultTime'))  {
+                                    // Use phenomenon time as result time for observations
+                                    //
+                                    var c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
+                                    timeColumns[col] = row[c];
+                                }
+                                else if ((col != 'lat') && (col != 'lon')) {
+                                    data[col] = row[col];
+                                }
+                            });
+
+                            Object.keys(data).forEach((param) => {
+                                // Without 'timestep' timeseries may return less values than coordinates when there are missing (N/A)
+                                // values (e.g. minute resolution observations available for only some of the stations).
+                                //
+                                var arrayValue = _.isArray(data[param]);
+                                var arrayCoord = _.isArray(row['lon']);
+                                var numValues = arrayValue ? data[param].length : 1;
+                                var numCoords = arrayCoord ? row['lon'].length : 1;
+                                var valIdx = 0;
+
+                                if (numValues != numCoords) {
+                                    console.debug(paramMap[param] + ' value/coordinate count mismatch ' +
+                                                  timeColumns['phenomenonTime'],numValues,numCoords);
+                                    numValues = (numValues > numCoords ? numCoords : numValues);
+                                }
+
+                                while ((valIdx < numValues) && (outputCount < limit)) {
+                                    item = items[param];
+
+                                    if (item) {
+                                        if (
+                                            ((arrayCoord ? row['lon'][valIdx] : row['lon']) != item.feature.geometry.coordinates[0]) ||
+                                            ((arrayCoord ? row['lat'][valIdx] : row['lat']) != item.feature.geometry.coordinates[1])
+                                           ) {
+                                            if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                                item.nextToken = String(++nextTokenRow.nextToken);
+
+                                                if (ret.push(item)) {
+                                                    outputCount++;
+                                                }
+                                            }
+
+                                            item = null;
+                                            nFeatures++;
+                                         }
+                                    }
+                                    else {
+                                        nFeatures++;
+                                    }
+
+                                    if (!item) {
+                                        item = new Item();
+                                        item.feature = new Feature();
+                                        item.feature.type = 'Feature';
+                                        item.feature.properties = { };
+                                        item.feature.properties['observationType'] = 'MeasureTimeseriesObservation';
+                                        item.feature.properties.timestep = [ ];
+                                        item.feature.geometry = new Geometry();
+
+                                        item.feature.properties['id'] = 'BsWfsElement.1.' + String(nFeatures) + '.1';
+                                        item.feature.properties['observedPropertyName'] = paramMap[param];
+                                        item.feature.properties['result'] = [ ];
+                                        item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                        item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                        items[param] = item;
+                                    }
+
+                                    var idx = item.feature.properties['result'].length;
+
+                                    item.feature.properties['result'][idx] = arrayValue ? data[param][valIdx] : data[param];
+                                    item.feature.properties['timestep'][idx] = timeColumns['phenomenonTime'];
+
+                                    valIdx++;
+                                }
+                            });
+
+                            setTimeout(nextTimeSerieRow, 5);
+                        }
+                        else {
+                            if ((outputCount < limit) && item) {
+                                if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                    item.nextToken = String(++nextTokenRow.nextToken);
+                                    ret.push(item);
+                                }
+                            }
+
+                            ret.push(null);
+                        }
+                    }
+
+                    if (collection.timeserieoutput) {
+                        setTimeout(nextTimeSerieRow, 5);
+                    }
+                    else {
+                        setTimeout(nextRow, 5);
+                    }
                 }).on("error", (err) => {
                     console.error('Data query error: ' + err.message);
 
