@@ -87,9 +87,9 @@ readStream.on('data', (chunk) => {
                                                                            false,
                                                                            false));
 
-                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + '_timeserie',
-                                                                           collection.title + ' time serie',
-                                                                           collection.description + ' in time serie format' +
+                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + '_timeseries',
+                                                                           collection.title + ' time series',
+                                                                           collection.description + ' in time series format' +
                                                                            '. Default parameter set contains following parameters: ' +
                                                                            collection.defaultparameters,
                                                                            conf.server,
@@ -207,9 +207,9 @@ readStream.on('data', (chunk) => {
                                                                                    true,
                                                                                    false));
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + '_timeserie',
-                                                                                   collection.title + timeStepName + ' time serie',
-                                                                                   collection.description  + ' in time serie format' +
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + '_timeseries',
+                                                                                   collection.title + timeStepName + ' time series',
+                                                                                   collection.description  + ' in time series format' +
                                                                                    '. Default parameter set contains following parameters: ' +
                                                                                    collection.defaultparameters,
                                                                                    conf.server,
