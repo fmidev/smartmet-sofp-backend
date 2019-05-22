@@ -619,8 +619,9 @@ class GeoJSONCollection implements Collection {
             nextTokenRow.row = 0;
             nextTokenRow.curToken = nextTokenRow.row * nParams;
 
-            if (collection.timeserieoutput) {
-                // Note: currently all data must be fetched because number of timesteps is unknown
+            if (collection.timeserieoutput || !collection.timeserieoutput) {
+                // Note: currently all data must be fetched because number of timeserie timesteps is unknown,
+                //       and missing values (null's) are filtered off for non timeserie output
                 //
                 nextTokenRow.limit = 0;
             }
@@ -722,20 +723,24 @@ class GeoJSONCollection implements Collection {
                                 }
 
                                 while ((valIdx < numValues) && (outputCount < limit)) {
-                                    if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
-                                        item.feature.properties['id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
-                                        item.feature.properties['observedPropertyName'] = paramMap[param];
-                                        item.feature.properties['result'] = arrayValue ? data[param][valIdx] : data[param];
-                                        item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
-                                        item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                    var result = arrayValue ? data[param][valIdx] : data[param];
 
-                                        item.nextToken = String(++nextTokenRow.nextToken);
+                                    if (result != 'null') {
+                                        if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                            item.feature.properties['id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
+                                            item.feature.properties['observedPropertyName'] = paramMap[param];
+                                            item.feature.properties['result'] = result;
+                                            item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                            item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
 
-                                        if (ret.push(item)) {
-                                            outputCount++;
+                                            item.nextToken = String(++nextTokenRow.nextToken);
+
+                                            if (ret.push(item)) {
+                                                outputCount++;
+                                            }
+                                            else
+                                                console.debug('Filter',nextTokenRow.nextToken,param,arrayValue ? data[param][valIdx] : data[param]);
                                         }
-                                        else
-                                            console.debug('Filter',nextTokenRow.nextToken,param,arrayValue ? data[param][valIdx] : data[param]);
                                     }
 
                                     valIdx++;
