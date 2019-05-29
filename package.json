@@ -1,6 +1,6 @@
 {
   "name": "sofp-smartmet-backend",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Smartmet backend for sofp-core",
   "main": "dist/index.js",
   "sofp-backend": "SofpSmartmetBackend",
@@ -29,7 +29,7 @@
     }
   ],
   "dependencies": {
-    "sofp-lib": "0.1.0",
+    "sofp-lib": "0.3.2",
     "lodash": "~4.17.11"
   },
   "devDependencies": {
