@@ -1,4 +1,4 @@
-import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, Property} from 'sofp-lib';
+import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, Property, QueryParameter} from 'sofp-lib';
 
 import * as _ from 'lodash';
 
@@ -307,18 +307,23 @@ class GeoJSONCollection implements Collection {
         name: 'resultTime',
         type: 'string',
         description: 'Result time instant'
-    },{
-        name: 'place',
-        type: 'string',
-        description: 'Data target location name(s)'
+    }];
+
+    additionalQueryParameters : QueryParameter [] = [{
+        name : 'place',
+        type : 'string',
+        description : 'Filter returned features based on place name(s).',
+        exampleValues : [ 'Helsinki', 'Porvoo', 'Kuopio' ]
     },{
         name: 'latlon',
         type: 'string',
-        description: 'Data target latlon coordinate(s)'
+        description: 'Filter returned features based on latlon coordinate(s).',
+        exampleValues : [ '60.19,24.94', '60.44,25.67', '62.97,27.67' ]
     },{
         name: 'lonlat',
         type: 'string',
-        description: 'Data target lonlat coordinate(s)'
+        description: 'Filter returned features based on lonlat coordinate(s).',
+        exampleValues : [ '24.94,60.19', '25.67,60.44', '27.67,62.97' ]
     }];
 
     constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable, timeSerieOutput) {
@@ -332,12 +337,13 @@ class GeoJSONCollection implements Collection {
         this.defaultTime = defaultTime;
         this.defaultParameters = defaultParameters;
         this.enumerable = enumerable;
-        this.timeserieoutput = timeSerieOutput
+        this.timeserieoutput = timeSerieOutput;
     }
 
     executeQuery(query : Query) : FeatureStream {
         var ret = new FeatureStream();
-        ret.remainingFilter = query.filters.slice();
+        var additionalFilter : Filter = _.find(query.filters, { filterClass: 'AdditionalParameterFilter' });
+        ret.remainingFilter = _.without(query.filters, additionalFilter);
         var nextToken = Number(query.nextToken || '0');
 
         class RequiredDataRequestParameter implements DataRequestParameter {
@@ -501,25 +507,42 @@ class GeoJSONCollection implements Collection {
                     }
                 }
             }
-            function extractCoordinateFilter(requestParameter, queryFilters) : String {
-                var propFilter : Filter = _.find(queryFilters, { filterClass: 'PropertyFilter' });
+            function extractAdditionalFilter(requestParameter, queryFilters) : String {
+                // e.g. place=Helsinki[,Turku,...]
+                if (additionalFilter && (_.keys(additionalFilter.parameters.parameters).indexOf(requestParameter.propertyName) >= 0)) {
+                    var filter = requestParameter.parameterName;
+                    var nElem = 0;
 
-                if (propFilter && (_.keys(propFilter.parameters.properties).indexOf(requestParameter.propertyName) >= 0)) {
+                    _.forEach(decodeURIComponent(additionalFilter.parameters.parameters[requestParameter.propertyName]).split(','), (param) => {
+                        filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param.trim()));
+                    });
+
+                    return filter;
+                }
+            }
+            function extractAdditionalCoordinateFilter(requestParameter, queryFilters) : String {
+                // latlon=lat,lon[,lat,lon,...] or lonlat=lon,lat[,lon,lat,...]
+                if (additionalFilter && (_.keys(additionalFilter.parameters.parameters).indexOf(requestParameter.propertyName) >= 0)) {
                     var filter = requestParameter.parameterName;
                     var nElem = 0;
                     var nextCoordIsLat = (requestParameter.propertyName == 'latlon');
-                    var coords = propFilter.parameters.properties[requestParameter.propertyName].split(',');
+                    var coords = additionalFilter.parameters.parameters[requestParameter.propertyName];
+                    if (_.isArray(coords)) {
+                        coords = coords.join(',');
+                    }
+                    coords = coords.split(',');
 
                     if ((coords.length < 2) || ((coords.length % 2) != 0)) {
                         throw new Error('Invalid number of ' + requestParameter.propertyName + ' coordinate values: ' +
-                                        propFilter.parameters.properties[requestParameter.propertyName]);
+                                        additionalFilter.parameters.parameters[requestParameter.propertyName]);
                     }
 
                     _.forEach(coords, (coord) => {
                         var coordOk = false;
+                        var value : Number;
 
                         if (!isNaN(coord)) {
-                            var value = Number(coord);
+                            value = Number(coord);
                             var minValue = (nextCoordIsLat ? -90 : -180);
                             var maxValue = (nextCoordIsLat ? 90 : 180);
 
@@ -530,12 +553,10 @@ class GeoJSONCollection implements Collection {
                             throw new Error('Invalid ' + requestParameter.propertyName + ' coordinate value: ' + coord);
                         }
 
-                        filter += (((nElem++ == 0) ? "" : ",") + coord);
+                        filter += (((nElem++ == 0) ? "" : ",") + value);
 
                         nextCoordIsLat = (!nextCoordIsLat);
                     });
-
-                    delete propFilter.parameters.properties[requestParameter.propertyName];
 
                     return filter;
                 }
@@ -555,9 +576,9 @@ class GeoJSONCollection implements Collection {
                                                  )
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
-               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractPropertyFilter, null) ]
-               ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 'latlon', extractCoordinateFilter, null) ]
-               ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 'lonlat', extractCoordinateFilter, null) ]
+               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractAdditionalFilter, null) ]
+               ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 'latlon', extractAdditionalCoordinateFilter, null) ]
+               ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 'lonlat', extractAdditionalCoordinateFilter, null) ]
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
