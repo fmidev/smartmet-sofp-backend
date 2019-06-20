@@ -1,5 +1,19 @@
 {
   "server" : "http://localhost:8080",
+  "featureid" : {
+                 "parameter" : "[parameter]",
+                 "producer" : "[producer]",
+                 "level_type" : "0",
+                 "level" : "0",
+                 "forecast_type" : "0",
+                 "forecast_number" : "0",
+                 "generation" : "[origintime]",
+                 "area" : "[coordinate]",
+                 "time" : "[validtime]",
+                 "area_interpolation_method" : "0",
+                 "time_interpolation_method" : "0",
+                 "level_interpolation_method" : "0"
+                },
   "innumerabledatacollections" : [
                                   {
                                    "name" : "hirlam",
