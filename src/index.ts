@@ -6,6 +6,39 @@ let SofpSmartmetBackend = new Backend('SofpSmartmetBackend');
 
 // Load configuration file
 
+interface IFeatureId {
+    parameter : string,
+    producer : string,
+    level_type : string,
+    level : string,
+    forecast_type : string,
+    forecast_number : string,
+    generation : string,
+    area : string,
+    time : string,
+    area_interpolation_method : string,
+    time_interpolation_method : string,
+    level_interpolation_method : string,
+    time0? : string
+};
+
+type FeatureIdType = IFeatureId;
+
+function isFeatureId(id : FeatureIdType): id is IFeatureId {
+    if ((id as FeatureIdType).parameter) {
+        return true;
+    }
+
+    return false;
+}
+
+function idToString (featureId : IFeatureId) {
+    return featureId.parameter + ':' + featureId.producer + ':' + featureId.level_type + ':' + featureId.level + ':' +
+           featureId.forecast_type + ':' + featureId.forecast_number + ':' +
+           featureId.generation + ':' + featureId.area + ':' + featureId.time + ':' +
+           featureId.area_interpolation_method + ':' + featureId.time_interpolation_method + ':' + featureId.level_interpolation_method;
+}
+
 const fs = require('fs');
 var readStream = fs.createReadStream('backends/smartmet-sofp-backend/cnf/smartmet.json');
 var buf = '';
@@ -20,6 +53,14 @@ readStream.on('data', (chunk) => {
 
         if ((!_.has(conf, 'server')) || (!_.isString(conf.server)) || (conf.server == '')) {
             throw new Error('\'server\' must be an nonempty string (host:port)');
+        }
+
+        // Feature id default field values. Parameter, producer, generation, area and time are set from request/data.
+        //
+        // [param]:[producer]:leveltype:level:forecasttype:forecastnumber:generation:area:time:areainterp:timeinterp:levelinterp
+
+        if ((!_.has(conf, 'featureid')) || (!isFeatureId(conf.featureid))) {
+            throw new Error('\'featureid\' must be a FeatureId object');
         }
 
         // Innumerable (forecast) data collections
@@ -84,6 +125,7 @@ readStream.on('data', (chunk) => {
                                                                            collection.defaultlocation,
                                                                            collection.defaulttime,
                                                                            collection.defaultparameters,
+                                                                           conf.featureid,
                                                                            false,
                                                                            false));
 
@@ -98,6 +140,7 @@ readStream.on('data', (chunk) => {
                                                                            collection.defaultlocation,
                                                                            collection.defaulttime,
                                                                            collection.defaultparameters,
+                                                                           conf.featureid,
                                                                            false,
                                                                            true));
             });
@@ -204,6 +247,7 @@ readStream.on('data', (chunk) => {
                                                                                    collection.defaultlocation,
                                                                                    collection.defaulttime,
                                                                                    collection.defaultparameters,
+                                                                                   conf.featureid,
                                                                                    true,
                                                                                    false));
 
@@ -218,6 +262,7 @@ readStream.on('data', (chunk) => {
                                                                                    collection.defaultlocation,
                                                                                    collection.defaulttime,
                                                                                    collection.defaultparameters,
+                                                                                   conf.featureid,
                                                                                    true,
                                                                                    true));
                     });
@@ -277,6 +322,7 @@ class GeoJSONCollection implements Collection {
     defaultLocation : string;
     defaultTime : string;
     defaultParameters : string;
+    featureId : FeatureIdType;
     data : GeoJSONFeatureCollection;
 
     properties : Property [] = [{
@@ -326,7 +372,7 @@ class GeoJSONCollection implements Collection {
         exampleValues : [ '24.94,60.19', '25.67,60.44', '27.67,62.97' ]
     }];
 
-    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, enumerable, timeSerieOutput) {
+    constructor(name, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, featureId, enumerable, timeSerieOutput) {
         this.name = name;
         this.title = title;
         this.description = description;
@@ -336,6 +382,7 @@ class GeoJSONCollection implements Collection {
         this.defaultLocation = defaultLocation;
         this.defaultTime = defaultTime;
         this.defaultParameters = defaultParameters;
+        this.featureId = featureId;
         this.enumerable = enumerable;
         this.timeserieoutput = timeSerieOutput;
     }
@@ -681,6 +728,8 @@ class GeoJSONCollection implements Collection {
             var requestParameters = extractDataQueryParameters(collection, ret.remainingFilter, nextTokenRow, paramMap);
             var buf = '';
 
+            collection.featureId.producer = collection.producer;
+
             http.get(dataRequestUrl(collection, requestParameters, nextTokenRow), (response) => {
                 var outputCount = 0;
 
@@ -743,16 +792,24 @@ class GeoJSONCollection implements Collection {
                                     numValues = (numValues > numCoords ? numCoords : numValues);
                                 }
 
+                                collection.featureId.parameter = paramMap[param];
+
                                 while ((valIdx < numValues) && (outputCount < limit)) {
                                     var result = arrayValue ? data[param][valIdx] : data[param];
 
                                     if (result != 'null') {
                                         if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
-                                            item.feature.properties['id'] = 'BsWfsElement.1.' + String(nextTokenRow.row) + '.' + String(N);
                                             item.feature.properties['observedPropertyName'] = paramMap[param];
                                             item.feature.properties['result'] = result;
-                                            item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
-                                            item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                            var lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                            var lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                            item.feature.geometry.coordinates[0] = lon;
+                                            item.feature.geometry.coordinates[1] = lat;
+
+                                            collection.featureId.generation = item.feature.properties['resultTime'];
+                                            collection.featureId.area = _.toString(lat) + ',' + _.toString(lon);
+                                            collection.featureId.time = item.feature.properties['phenomenonTime'];
+                                            item.feature.properties['id'] = idToString(collection.featureId);
 
                                             item.nextToken = String(++nextTokenRow.nextToken);
 
@@ -824,6 +881,9 @@ class GeoJSONCollection implements Collection {
                                             ((arrayCoord ? row['lat'][valIdx] : row['lat']) != item.feature.geometry.coordinates[1])
                                            ) {
                                             if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                                collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
+                                                item.feature.properties['id'] = idToString(collection.featureId);
+
                                                 item.nextToken = String(++nextTokenRow.nextToken);
 
                                                 if (ret.push(item)) {
@@ -848,18 +908,26 @@ class GeoJSONCollection implements Collection {
                                         item.feature.properties.timestep = [ ];
                                         item.feature.geometry = new Geometry();
 
-                                        item.feature.properties['id'] = 'BsWfsElement.1.' + String(nFeatures) + '.1';
                                         item.feature.properties['observedPropertyName'] = paramMap[param];
                                         item.feature.properties['result'] = [ ];
-                                        item.feature.geometry.coordinates[0] = arrayCoord ? row['lon'][valIdx] : row['lon'];
-                                        item.feature.geometry.coordinates[1] = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                        var lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                        var lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                        item.feature.geometry.coordinates[0] = lon;
+                                        item.feature.geometry.coordinates[1] = lat;
                                         items[param] = item;
+
+                                        collection.featureId.parameter = paramMap[param];
+                                        collection.featureId.generation = timeColumns['resultTime'];
+                                        collection.featureId.time0 = timeColumns['phenomenonTime'];
+                                        collection.featureId.area = _.toString(lat) + ',' + _.toString(lon);
                                     }
 
                                     var idx = item.feature.properties['result'].length;
 
                                     item.feature.properties['result'][idx] = arrayValue ? data[param][valIdx] : data[param];
                                     item.feature.properties['timestep'][idx] = timeColumns['phenomenonTime'];
+
+                                    collection.featureId.time = timeColumns['phenomenonTime'];
 
                                     valIdx++;
                                 }
@@ -870,6 +938,9 @@ class GeoJSONCollection implements Collection {
                         else {
                             if ((outputCount < limit) && item) {
                                 if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                    collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
+                                    item.feature.properties['id'] = idToString(collection.featureId);
+
                                     item.nextToken = String(++nextTokenRow.nextToken);
                                     ret.push(item);
                                 }
