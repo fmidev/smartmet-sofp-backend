@@ -1,6 +1,6 @@
 {
   "name": "sofp-smartmet-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Smartmet backend for sofp-core",
   "main": "dist/index.js",
   "sofp-backend": "SofpSmartmetBackend",
@@ -29,17 +29,19 @@
     }
   ],
   "dependencies": {
-    "sofp-lib": "0.3.2",
-    "lodash": "~4.17.11"
+    "immer": "^8.0.1",
+    "lodash": "^4.17.19",
+    "sofp-lib": "^0.5.2"
   },
   "devDependencies": {
-    "nodemon": "~1.18.3",
-    "jest": "~23.6.0",
-    "typescript": "~2.9.2",
+    "@types/jest": "^25.1.5",
+    "@types/lodash": "4.14.158",
     "@types/node": "~10.9.3",
-    "ts-node": "~7.0.1",
-    "@types/jest": "~23.3.1",
-    "ts-jest": "~23.1.4",
-    "@types/lodash": "4.14.116"
+    "@types/yargs": "12.0.2",
+    "jest": "~25.5.4",
+    "nodemon": "^2.0.4",
+    "ts-jest": "~25.5.1",
+    "ts-node": "~8.10.2",
+    "typescript": "~3.9.7"
   }
 }
