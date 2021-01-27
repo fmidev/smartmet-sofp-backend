@@ -513,7 +513,7 @@ class GeoJSONCollection implements Collection {
                            "&endtime=" + propFilter.parameters.momentEnd.utc().format();
                 }
                 else if (_.isString(requestParameter.defaultValue) && (requestParameter.defaultValue != '')) {
-                    return '&' + encodeURIComponent(requestParameter.defaultValue);
+                    return '&' + requestParameter.defaultValue;
                 }
             }
             function pointsWithinBBOX(BBOXCorners : number[]) : String {
