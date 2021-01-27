@@ -359,7 +359,7 @@ class GeoJSONCollection implements Collection {
         type: PropertyType.string,
         description: 'Feature id'
     },{
-        name: 'time',
+        name: 'datetime',
         type: PropertyType.string,
         description: 'Data target time instant or range'
     },{
@@ -647,7 +647,7 @@ class GeoJSONCollection implements Collection {
                                                   extractPropertyFilter, collection.defaultParameters
                                                  )
                 ]
-               ,[ 'time', new OptionalDataRequestParameter('&time=', 'time', extractTimeFilter, collection.defaultTime) ]
+               ,[ 'time', new OptionalDataRequestParameter('&datetime=', 'datetime', extractTimeFilter, collection.defaultTime) ]
                ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractAdditionalFilter, null) ]
                ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 'latlon', extractAdditionalCoordinateFilter, null) ]
                ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 'lonlat', extractAdditionalCoordinateFilter, null) ]
