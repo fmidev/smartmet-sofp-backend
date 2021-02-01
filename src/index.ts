@@ -6,7 +6,7 @@ import {immerable, produce} from 'immer';
 
 let SofpSmartmetBackend = new Backend('SofpSmartmetBackend');
 
-class dataFeature { [ immerable] = true; id? : string; properties = { }; geometry : any; }
+class dataFeature { [ immerable] = true; id? : string; type = 'Feature'; properties = { }; geometry : any; }
 class dataItem {
   feature : Feature;
   nextToken : string;
@@ -833,7 +833,7 @@ class GeoJSONCollection implements Collection {
                                             collection.featureId.generation = feature.properties['resultTime'];
                                             collection.featureId.area = _.toString(lat) + ',' + _.toString(lon);
                                             collection.featureId.time = feature.properties['phenomenonTime'];
-                                            feature.properties['id'] = idToString(collection.featureId);
+                                            feature.id = idToString(collection.featureId);
 
                                             if (ret.push(new dataItem(feature,++nextTokenRow.nextToken))) {
                                                 outputCount++;
@@ -910,7 +910,7 @@ class GeoJSONCollection implements Collection {
                                             if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
                                                 collection.featureId.parameter = feature.properties['observedPropertyName'];
                                                 collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
-                                                feature.properties['id'] = idToString(collection.featureId);
+                                                feature.id = idToString(collection.featureId);
 
                                                 if (ret.push(new dataItem(feature,++nextTokenRow.nextToken))) {
                                                     outputCount++;
@@ -963,7 +963,7 @@ class GeoJSONCollection implements Collection {
                                 if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
                                     collection.featureId.parameter = feature.properties['observedPropertyName'];
                                     collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
-                                    feature.properties['id'] = idToString(collection.featureId);
+                                    feature.id = idToString(collection.featureId);
 
                                     ret.push(new dataItem(feature,++nextTokenRow.nextToken));
                                 }
