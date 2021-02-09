@@ -858,7 +858,6 @@ class GeoJSONCollection implements Collection {
                     }
 
                     var features = { }
-                    var nFeatures = 0;
 
                     function nextTimeSerieRow() {
                         const cfeature = new dataFeature();
@@ -913,16 +912,13 @@ class GeoJSONCollection implements Collection {
                                                 feature.id = idToString(collection.featureId);
 
                                                 if (ret.push(new dataItem(feature,++nextTokenRow.nextToken))) {
-                                                    outputCount++;
+                                                    if (++outputCount >= limit)
+                                                        break;
                                                 }
                                             }
 
                                             feature = null;
-                                            nFeatures++;
                                          }
-                                    }
-                                    else {
-                                        nFeatures++;
                                     }
 
                                     if (!feature) {
@@ -959,14 +955,18 @@ class GeoJSONCollection implements Collection {
                             setTimeout(nextTimeSerieRow, 5);
                         }
                         else {
-                            if ((outputCount < limit) && feature) {
-                                if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
-                                    collection.featureId.parameter = feature.properties['observedPropertyName'];
-                                    collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
-                                    feature.id = idToString(collection.featureId);
+                            if (outputCount < limit) {
+                                Object.keys(features).forEach((param) => {
+                                    if ((outputCount < limit) && (nextTokenRow.curToken++ >= nextTokenRow.nextToken)) {
+                                        feature = features[param];
+                                        collection.featureId.parameter = feature.properties['observedPropertyName'];
+                                        collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
+                                        feature.id = idToString(collection.featureId);
 
-                                    ret.push(new dataItem(feature,++nextTokenRow.nextToken));
-                                }
+                                        ret.push(new dataItem(feature,++nextTokenRow.nextToken));
+                                        outputCount++;
+                                    }
+                                })
                             }
 
                             ret.push(null);
