@@ -18,6 +18,7 @@
                                   {
                                    "name" : "hirlam",
                                    "description" : "FMI hirlam surface forecast data",
+                                   "producer" : "hirlam",
                                    "defaultlocation" : "bbox=19.0999994448403,59.6999982183814,31.6999990684267,70.099997907566",
                                    "defaultparameters" : "GeopHeight, Temperature, Pressure, Humidity, WindDirection, WindSpeedMS, WindUMS, WindVMS, MaximumWind, WindGust, DewPoint, TotalCloudCover, WeatherSymbol3, LowCloudCover, MediumCloudCover, HighCloudCover, Precipitation1h, PrecipitationAmount, RadiationGlobalAccumulation, RadiationLWAccumulation, RadiationNetSurfaceLWAccumulation, RadiationNetSurfaceSWAccumulation, RadiationDiffuseAccumulation, LandSeaMask"
                                   }
