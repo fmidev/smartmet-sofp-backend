@@ -1,5 +1,5 @@
 {
-  "server" : "http://localhost:8080",
+  "server" : "http://data.fmi.fi/fmi-apikey/e684a8a1-90ca-42d3-a4d6-e4bbc46b387d",
   "featureid" : {
                  "parameter" : "[parameter]",
                  "producer" : "[producer]",
@@ -21,31 +21,5 @@
                                    "defaultlocation" : "bbox=19.0999994448403,59.6999982183814,31.6999990684267,70.099997907566",
                                    "defaultparameters" : "GeopHeight, Temperature, Pressure, Humidity, WindDirection, WindSpeedMS, WindUMS, WindVMS, MaximumWind, WindGust, DewPoint, TotalCloudCover, WeatherSymbol3, LowCloudCover, MediumCloudCover, HighCloudCover, Precipitation1h, PrecipitationAmount, RadiationGlobalAccumulation, RadiationLWAccumulation, RadiationNetSurfaceLWAccumulation, RadiationNetSurfaceSWAccumulation, RadiationDiffuseAccumulation, LandSeaMask"
                                   }
-                                 ],
-  "enumerabledatacollections" : [
-                                 {
-                                  "collections" : [
-                                                   {
-                                                    "name" : "opendata",
-                                                    "description" : "FMI observation data",
-                                                    "defaultlocation" : "keyword=ajax_fi_all",
-                                                    "defaulttime" : "starttime=-24h",
-                                                    "defaultparameters" : "Temperature, Pressure, Humidity, WindDirection, WindSpeedMS, WindGust, DewPoint, TotalCloudCover, Precipitation1h"
-                                                   }
-                                                  ],
-                                  "timesteps" : [ "1m", "10m", "1h" ]
-                                 },
-                                 {
-                                  "collections" : [
-                                                   {
-                                                    "name" : "airquality",
-                                                    "description" : "FMI air quality observation data",
-                                                    "defaultlocation" : "keyword=air_quality_urban",
-                                                    "defaulttime" : "starttime=-24h",
-                                                    "defaultparameters" : "SO2_PT1H_avg, NO_PT1H_avg, NO2_PT1H_avg, O3_PT1H_avg, TRSC_PT1H_avg, CO_PT1H_avg, PM10_PT1H_avg, PM25_PT1H_avg, AQINDEX_PT1H_avg"
-                                                   }
-                                                  ],
-                                  "timesteps" : [ "1h" ]
-                                 }
-                                ]
+                                 ]
 }
