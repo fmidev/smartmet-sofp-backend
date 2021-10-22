@@ -261,7 +261,7 @@ readStream.on('data', (chunk) => {
                             checkDefaultParams = false;
                         } 
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix,
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + ' : ' + SofpSmartmetBackend.collections.length,
                                                                                    collection.title + timeStepName,
                                                                                    collection.description +
                                                                                    '. Default parameter set contains following parameters: ' +
@@ -276,7 +276,7 @@ readStream.on('data', (chunk) => {
                                                                                    true,
                                                                                    false));
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + '_timeseries',
+                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.name + timeStepSuffix + '_timeseries : ' + SofpSmartmetBackend.collections.length,
                                                                                    collection.title + timeStepName + ' time series',
                                                                                    collection.description  + ' in time series format' +
                                                                                    '. Default parameter set contains following parameters: ' +
