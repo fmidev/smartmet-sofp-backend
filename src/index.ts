@@ -1,4 +1,4 @@
-import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, PropertyType, Property, QueryParameter} from 'sofp-lib';
+import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, PropertyType, Property, QueryParameter, Extent} from 'sofp-lib';
 
 import * as _ from 'lodash';
 
@@ -62,6 +62,8 @@ interface ICollectionConfig {
     defaultlocation : string;
     defaulttime : string;
     defaultparameters : string;
+    links : Link[];
+    extent : Extent;
 }
 
 type CollectionConfigType = ICollectionConfig;
@@ -154,37 +156,73 @@ readStream.on('data', (chunk) => {
                     throw new Error('innumerabledatacollections: \'defaultparameters\' must be a nonempty string (param1,param2,..)');
                 }
 
-                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.id + ':' +
-                                                                           (SofpSmartmetBackend.collections.length+1),
-                                                                           collection.title,
-                                                                           collection.description +
-                                                                           '. Default parameter set contains following parameters: ' +
-                                                                           collection.defaultparameters,
-                                                                           conf.server,
-                                                                           collection.producer,
-                                                                           '',
-                                                                           collection.defaultlocation,
-                                                                           collection.defaulttime,
-                                                                           collection.defaultparameters,
-                                                                           conf.featureid,
-                                                                           false,
-                                                                           false));
+                let theCollection : GeoJSONCollection = {} as any;
 
-                SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.id + '_timeseries:' +
-                                                                           (SofpSmartmetBackend.collections.length+1),
-                                                                           collection.title + ' time series',
-                                                                           collection.description + ' in time series format' +
-                                                                           '. Default parameter set contains following parameters: ' +
-                                                                           collection.defaultparameters,
-                                                                           conf.server,
-                                                                           collection.producer,
-                                                                           '',
-                                                                           collection.defaultlocation,
-                                                                           collection.defaulttime,
-                                                                           collection.defaultparameters,
-                                                                           conf.featureid,
-                                                                           false,
-                                                                           true));
+                theCollection = new GeoJSONCollection(collection.id + ':' +
+                                                      (SofpSmartmetBackend.collections.length+1),
+                                                      collection.title,
+                                                      collection.description +
+                                                      '. Default parameter set contains following parameters: ' +
+                                                      collection.defaultparameters,
+                                                      conf.server,
+                                                      collection.producer,
+                                                      '',
+                                                      collection.defaultlocation,
+                                                      collection.defaulttime,
+                                                      collection.defaultparameters,
+                                                      conf.featureid,
+                                                      false,
+                                                      false);
+
+                if (_.has(collection,'links')) {
+                    collection.links.forEach((l, i) => {
+                        theCollection.links.push(l);
+                    });
+                }
+
+                if (_.has(collection,'extent')) {
+                    let extent : Extent = {
+                        spatial : collection.extent.spatial,
+                        temporal : collection.extent.temporal
+                      };
+
+                    theCollection.extent = extent;
+                }
+
+                SofpSmartmetBackend.collections.push(theCollection);
+
+                theCollection = new GeoJSONCollection(collection.id + '_timeseries:' +
+                                                      (SofpSmartmetBackend.collections.length+1),
+                                                      collection.title + ' time series',
+                                                      collection.description + ' in time series format' +
+                                                      '. Default parameter set contains following parameters: ' +
+                                                      collection.defaultparameters,
+                                                      conf.server,
+                                                      collection.producer,
+                                                      '',
+                                                      collection.defaultlocation,
+                                                      collection.defaulttime,
+                                                      collection.defaultparameters,
+                                                      conf.featureid,
+                                                      false,
+                                                      true);
+
+                if (_.has(collection,'links')) {
+                    collection.links.forEach((l, i) => {
+                        theCollection.links.push(l);
+                    });
+                }
+
+                if (_.has(collection,'extent')) {
+                    let extent : Extent = {
+                        spatial : collection.extent.spatial,
+                        temporal : collection.extent.temporal
+                      };
+
+                    theCollection.extent = extent;
+                }
+
+                SofpSmartmetBackend.collections.push(theCollection);
             });
         }
 
@@ -291,37 +329,73 @@ readStream.on('data', (chunk) => {
                             checkDefaultParams = false;
                         } 
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.id + timeStepSuffix + ':' +
-                                                                                   (SofpSmartmetBackend.collections.length+1),
-                                                                                   collection.title + timeStepName,
-                                                                                   collection.description +
-                                                                                   '. Default parameter set contains following parameters: ' +
-                                                                                   collection.defaultparameters,
-                                                                                   conf.server,
-                                                                                   collection.producer,
-                                                                                   timeStep,
-                                                                                   collection.defaultlocation,
-                                                                                   collection.defaulttime,
-                                                                                   collection.defaultparameters,
-                                                                                   conf.featureid,
-                                                                                   true,
-                                                                                   false));
+                        let theCollection : GeoJSONCollection = {} as any;
 
-                        SofpSmartmetBackend.collections.push(new GeoJSONCollection(collection.id + timeStepSuffix + '_timeseries:' +
-                                                                                   (SofpSmartmetBackend.collections.length+1),
-                                                                                   collection.title + timeStepName + ' time series',
-                                                                                   collection.description  + ' in time series format' +
-                                                                                   '. Default parameter set contains following parameters: ' +
-                                                                                   collection.defaultparameters,
-                                                                                   conf.server,
-                                                                                   collection.producer,
-                                                                                   timeStep,
-                                                                                   collection.defaultlocation,
-                                                                                   collection.defaulttime,
-                                                                                   collection.defaultparameters,
-                                                                                   conf.featureid,
-                                                                                   true,
-                                                                                   true));
+                        theCollection = new GeoJSONCollection(collection.id + timeStepSuffix + ':' +
+                                                              (SofpSmartmetBackend.collections.length+1),
+                                                              collection.title + timeStepName,
+                                                              collection.description +
+                                                              '. Default parameter set contains following parameters: ' +
+                                                              collection.defaultparameters,
+                                                              conf.server,
+                                                              collection.producer,
+                                                              timeStep,
+                                                              collection.defaultlocation,
+                                                              collection.defaulttime,
+                                                              collection.defaultparameters,
+                                                              conf.featureid,
+                                                              true,
+                                                              false);
+
+                        if (_.has(collection,'links')) {
+                            collection.links.forEach((l, i) => {
+                                theCollection.links.push(l);
+                            });
+                        }
+
+                        if (_.has(collection,'extent')) {
+                            let extent : Extent = {
+                                spatial : collection.extent.spatial,
+                                temporal : collection.extent.temporal
+                              };
+
+                            theCollection.extent = extent;
+                        }
+
+                        SofpSmartmetBackend.collections.push(theCollection);
+
+                        theCollection = new GeoJSONCollection(collection.id + timeStepSuffix + '_timeseries:' +
+                                                              (SofpSmartmetBackend.collections.length+1),
+                                                              collection.title + timeStepName + ' time series',
+                                                              collection.description  + ' in time series format' +
+                                                              '. Default parameter set contains following parameters: ' +
+                                                              collection.defaultparameters,
+                                                              conf.server,
+                                                              collection.producer,
+                                                              timeStep,
+                                                              collection.defaultlocation,
+                                                              collection.defaulttime,
+                                                              collection.defaultparameters,
+                                                              conf.featureid,
+                                                              true,
+                                                              true);
+
+                        if (_.has(collection,'links')) {
+                            collection.links.forEach((l, i) => {
+                                theCollection.links.push(l);
+                            });
+                        }
+
+                        if (_.has(collection,'extent')) {
+                            let extent : Extent = {
+                                spatial : collection.extent.spatial,
+                                temporal : collection.extent.temporal
+                              };
+
+                            theCollection.extent = extent;
+                        }
+
+                        SofpSmartmetBackend.collections.push(theCollection);
                     });
                 });
             });
@@ -370,6 +444,7 @@ class GeoJSONCollection implements Collection {
     title : string;
     description : string;
     links : Link[] = [];
+    extent : Extent;
 
     server : string;
     producer : string;
