@@ -1,4 +1,4 @@
-import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, PropertyType, Property, QueryParameter, Extent} from 'sofp-lib';
+import {Backend, Collection, Link, Query, FeatureStream, Feature, Item, Filter, PropertyType, Property, QueryParameter} from 'sofp-lib';
 
 import * as _ from 'lodash';
 
@@ -63,7 +63,7 @@ interface ICollectionConfig {
     defaulttime : string;
     defaultparameters : string;
     links : Link[];
-    extent : Extent;
+//  extent : Extent;
 }
 
 type CollectionConfigType = ICollectionConfig;
@@ -180,14 +180,14 @@ readStream.on('data', (chunk) => {
                     });
                 }
 
-                if (_.has(collection,'extent')) {
-                    let extent : Extent = {
-                        spatial : collection.extent.spatial,
-                        temporal : collection.extent.temporal
-                      };
-
-                    theCollection.extent = extent;
-                }
+//              if (_.has(collection,'extent')) {
+//                  let extent : Extent = {
+//                      spatial : collection.extent.spatial,
+//                      temporal : collection.extent.temporal
+//                    };
+//
+//                  theCollection.extent = extent;
+//              }
 
                 SofpSmartmetBackend.collections.push(theCollection);
 
@@ -213,14 +213,14 @@ readStream.on('data', (chunk) => {
                     });
                 }
 
-                if (_.has(collection,'extent')) {
-                    let extent : Extent = {
-                        spatial : collection.extent.spatial,
-                        temporal : collection.extent.temporal
-                      };
-
-                    theCollection.extent = extent;
-                }
+//              if (_.has(collection,'extent')) {
+//                  let extent : Extent = {
+//                      spatial : collection.extent.spatial,
+//                      temporal : collection.extent.temporal
+//                    };
+//
+//                  theCollection.extent = extent;
+//              }
 
                 SofpSmartmetBackend.collections.push(theCollection);
             });
@@ -353,14 +353,14 @@ readStream.on('data', (chunk) => {
                             });
                         }
 
-                        if (_.has(collection,'extent')) {
-                            let extent : Extent = {
-                                spatial : collection.extent.spatial,
-                                temporal : collection.extent.temporal
-                              };
-
-                            theCollection.extent = extent;
-                        }
+//                      if (_.has(collection,'extent')) {
+//                          let extent : Extent = {
+//                              spatial : collection.extent.spatial,
+//                              temporal : collection.extent.temporal
+//                            };
+//
+//                          theCollection.extent = extent;
+//                      }
 
                         SofpSmartmetBackend.collections.push(theCollection);
 
@@ -386,14 +386,14 @@ readStream.on('data', (chunk) => {
                             });
                         }
 
-                        if (_.has(collection,'extent')) {
-                            let extent : Extent = {
-                                spatial : collection.extent.spatial,
-                                temporal : collection.extent.temporal
-                              };
-
-                            theCollection.extent = extent;
-                        }
+//                      if (_.has(collection,'extent')) {
+//                          let extent : Extent = {
+//                              spatial : collection.extent.spatial,
+//                              temporal : collection.extent.temporal
+//                            };
+//
+//                          theCollection.extent = extent;
+//                      }
 
                         SofpSmartmetBackend.collections.push(theCollection);
                     });
@@ -444,7 +444,7 @@ class GeoJSONCollection implements Collection {
     title : string;
     description : string;
     links : Link[] = [];
-    extent : Extent;
+//  extent : Extent;
 
     server : string;
     producer : string;
