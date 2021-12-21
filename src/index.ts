@@ -59,6 +59,7 @@ interface ICollectionConfig {
     title : string;
     description : string;
     producer : string;
+    neareststations : string;
     defaultlocation : string;
     defaulttime : string;
     defaultparameters : string;
@@ -166,6 +167,7 @@ readStream.on('data', (chunk) => {
                                                       collection.defaultparameters,
                                                       conf.server,
                                                       collection.producer,
+                                                      null,
                                                       '',
                                                       collection.defaultlocation,
                                                       collection.defaulttime,
@@ -199,6 +201,7 @@ readStream.on('data', (chunk) => {
                                                       collection.defaultparameters,
                                                       conf.server,
                                                       collection.producer,
+                                                      null,
                                                       '',
                                                       collection.defaultlocation,
                                                       collection.defaulttime,
@@ -303,6 +306,12 @@ readStream.on('data', (chunk) => {
                             throw new Error('enumerabledatacollections: \'producer\' must be a nonempty string');
                         }
 
+                        if (_.has(collection,'neareststations')) {
+                            if ((!_.isString(collection.neareststations)) || (collection.neareststations == '')) {
+                                throw new Error('enumerabledatacollections: \'neareststations\' must be a nonempty string');
+                            }
+                        }
+
                         if (_.has(collection,'defaultlocation')) {
                             if ((!_.isString(collection.defaultlocation)) || (collection.defaultlocation == '')) {
                                 throw new Error('enumerabledatacollections: \'defaultlocation\' must be a nonempty string (locationparam=value)');
@@ -339,6 +348,7 @@ readStream.on('data', (chunk) => {
                                                               collection.defaultparameters,
                                                               conf.server,
                                                               collection.producer,
+                                                              collection.neareststations,
                                                               timeStep,
                                                               collection.defaultlocation,
                                                               collection.defaulttime,
@@ -372,6 +382,7 @@ readStream.on('data', (chunk) => {
                                                               collection.defaultparameters,
                                                               conf.server,
                                                               collection.producer,
+                                                              null,
                                                               timeStep,
                                                               collection.defaultlocation,
                                                               collection.defaulttime,
@@ -432,6 +443,7 @@ interface GeoJSONFeatureCollection {
 
 interface DataRequestParameter {
     parameterName : String;
+    parameterGroupIndex : number;
     propertyName : String;
     groupName : String;
     filterFunction : Function;
@@ -443,11 +455,12 @@ class GeoJSONCollection implements Collection {
     id : string;
     title : string;
     description : string;
-    links : Link[] = [];
+    links : Link[];
 //  extent : Extent;
 
     server : string;
     producer : string;
+    neareststations : string;
     timestep : string;
     enumerable : boolean;
     timeserieoutput : boolean;
@@ -504,12 +517,14 @@ class GeoJSONCollection implements Collection {
         exampleValues : [ '24.94,60.19', '25.67,60.44', '27.67,62.97' ]
     }];
 
-    constructor(id, title, description, server, producer, timestep, defaultLocation, defaultTime, defaultParameters, featureId, enumerable, timeSerieOutput) {
+    constructor(id, title, description, server, producer, neareststations, timestep, defaultLocation, defaultTime, defaultParameters, featureId, enumerable, timeSerieOutput) {
         this.id = id;
         this.title = title;
         this.description = description;
+        this.links = [];
         this.server = server;
         this.producer = producer;
+        this.neareststations = neareststations;
         this.timestep = timestep;
         this.defaultLocation = defaultLocation;
         this.defaultTime = defaultTime;
@@ -527,14 +542,16 @@ class GeoJSONCollection implements Collection {
 
         class RequiredDataRequestParameter implements DataRequestParameter {
             parameterName : String;
+            parameterGroupIndex : number;
             propertyName : String;
             groupName : String;
             filterFunction : Function;
             required : Boolean;
             defaultValue : String;
 
-            constructor(parameterName : String, propertyName : String, filterFunction : Function, defaultValue : String) {
+            constructor(parameterName : String, parameterGroupIndex : number, propertyName : String, filterFunction : Function, defaultValue : String) {
                 this.parameterName = parameterName;
+                this.parameterGroupIndex = parameterGroupIndex;
                 this.propertyName = propertyName;
                 this.filterFunction = filterFunction;
                 this.required = true;
@@ -543,14 +560,16 @@ class GeoJSONCollection implements Collection {
         }
         class RequiredGroupDataRequestParameter implements DataRequestParameter {
             parameterName : String;
+            parameterGroupIndex : number;
             propertyName : String;
             groupName : String;
             filterFunction : Function;
             required : Boolean;
             defaultValue : String;
 
-            constructor(groupName : String, parameterName : String, propertyName : String, filterFunction : Function, defaultValue : String) {
+            constructor(groupName : String, parameterName : String, parameterGroupIndex : number, propertyName : String, filterFunction : Function, defaultValue : String) {
                 this.parameterName = parameterName;
+                this.parameterGroupIndex = parameterGroupIndex;
                 this.propertyName = propertyName;
                 this.groupName = groupName;
                 this.filterFunction = filterFunction;
@@ -560,6 +579,7 @@ class GeoJSONCollection implements Collection {
         }
         class OptionalDataRequestParameter implements DataRequestParameter {
             parameterName : String;
+            parameterGroupIndex : number;
             propertyName : String;
             groupName : String;
             filterFunction : Function;
@@ -568,13 +588,14 @@ class GeoJSONCollection implements Collection {
 
             constructor(parameterName : String, propertyName : String, filterFunction : Function, defaultValue: String) {
                 this.parameterName = parameterName;
+                this.parameterGroupIndex = 0;
                 this.propertyName = propertyName;
                 this.filterFunction = filterFunction;
                 this.required = false;
                 this.defaultValue = defaultValue;
             }
         }
-        function extractDataQueryParameters(collection : GeoJSONCollection, queryFilters : Filter[], nextTokenRow, paramMap) : String {
+        function extractDataQueryParameters(collection : GeoJSONCollection, queryFilters : Filter[], nextTokenRow, paramMap) : String[] {
             function extractPropertyFilter(requestParameter, queryFilters : Filter[], paramMap) : String {
                 var filter = requestParameter.parameterName;
                 var nElem = (filter.indexOf("=") < (filter.length - 1)) ? 1 : 0;
@@ -749,22 +770,23 @@ class GeoJSONCollection implements Collection {
                 [
                  'observedpropertyname',
                  new OptionalDataRequestParameter(
-                                                  '&param=lat,lon,utctime as phenomenonTime,origintime as resultTime',
+                                                  '&param=stationlat as lat,stationlon as lon,utctime as phenomenonTime,origintime as resultTime',
                                                   'observedpropertyname',
                                                   extractPropertyFilter, collection.defaultParameters
                                                  )
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&datetime=', 'datetime', extractTimeFilter, collection.defaultTime) ]
-               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 'place', extractAdditionalFilter, null) ]
-               ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 'latlon', extractAdditionalCoordinateFilter, null) ]
-               ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 'lonlat', extractAdditionalCoordinateFilter, null) ]
-               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
+               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 0, 'place', extractAdditionalFilter, null) ]
+               ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 1, 'latlon', extractAdditionalCoordinateFilter, null) ]
+               ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 1, 'lonlat', extractAdditionalCoordinateFilter, null) ]
+               ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', 0, BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
             var parameterGroups = new Set();
             var defaultLocation = collection.defaultLocation;
-            var dataRequestParameters = '';
+            var dataRequestParameters = [ '' ];
             var nParams : number = 0;
+            var nearestStations : boolean = (collection.neareststations ? true : false);
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
                 if (requestParameter instanceof RequiredGroupDataRequestParameter) {
@@ -794,20 +816,31 @@ class GeoJSONCollection implements Collection {
                         defaultLocation = null;
                     }
 
-                    dataRequestParameters += dataRequestParameter;
+                    if (dataRequestParameters.length <= requestParameter.parameterGroupIndex)
+                      dataRequestParameters.push(dataRequestParameter)
+                    else
+                      dataRequestParameters[requestParameter.parameterGroupIndex] += dataRequestParameter;
 
                     if (parameterName == 'observedpropertyname') {
                         nParams = (((dataRequestParameter.match(/,/g) || []).length) + 1);
                         nParams += ((dataRequestParameter.match(/%2C/g) || []).length) - 4; // -4; lat,lon,utctime,origintime
                     }
+                    else if ((parameterName == 'bbox') || (parameterName == 'place'))
+                        nearestStations = false;
                 }
             }
 
             if (parameterGroups.size > 0) {
                 // Default location was not bbox or place; use as is
                 //
-                dataRequestParameters += ('&' + collection.defaultLocation);
+                dataRequestParameters[0] += ('&' + collection.defaultLocation);
             }
+
+            if ((!nearestStations) && (dataRequestParameters.length > 1))
+                // Other than latlon/lonlat location(s) are used, not fetching nearest station(s);
+                // pop/remove second (latlon) element from parameter array and append it to first element
+                //
+                dataRequestParameters[0] += dataRequestParameters.pop();
 
             // Adjust max number of rows and nextToken to the start of first row for timeseries
             //
@@ -835,16 +868,16 @@ class GeoJSONCollection implements Collection {
             return dataRequestParameters;
         }
 
-        function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, nextTokenRow) : String {
+        function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, startRow : Number, limit : Number) : String {
             var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
-                          '&startrow=' + String(nextTokenRow.row) + '&maxresults=' + String(nextTokenRow.limit) +
+                          '&startrow=' + String(startRow) + '&maxresults=' + String(limit) +
                           '&format=json&missingtext=null&tz=UTC' + collection.timestep;
             console.debug(request);
 
             return request;
         }
 
-        function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : Number, ret) {
+        async function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : Number, ret) {
             class Geometry implements GeoJSONGeometry {
                 type : string;
                 coordinates : Number[];
@@ -856,23 +889,53 @@ class GeoJSONCollection implements Collection {
             }
 
             const http = require('http');
+            const got = require('got');
             var paramMap = new Map();
             var requestParameters = extractDataQueryParameters(collection, ret.remainingFilter, nextTokenRow, paramMap);
             var buf = '';
 
             collection.featureId.producer = collection.producer;
 
-            http.get(dataRequestUrl(collection, requestParameters, nextTokenRow), (response) => {
-                var outputCount = 0;
+            // For nearest station(s) (latlon) query the latlon(s) are stored at parameter arrays 2. index
 
-                response.on('data', (chunk) => {
-                    buf += chunk;
-                }).on("end", () => {
+            let latlons = [];
+            let rowLimit = nextTokenRow.limit;
+            let nextToken = 0;
+            let outputCount = 0;
+
+            if (requestParameters.length > 1) {
+                let items = requestParameters[1].split("=");
+                let param = collection.neareststations + items[0];
+                let coords = items[1].split(",");
+
+                if (nextTokenRow.nextToken >= (coords.length / 2)) {
+                    ret.push(null);
+                    return ret;
+                }
+
+                rowLimit = 1;
+                nextTokenRow.row = 0;
+                nextToken = nextTokenRow.curToken = nextTokenRow.nextToken;
+
+                for (let c = 0; (c < coords.length); c += 2)
+                    latlons.push(param + "=" + coords[c] + "," + coords[c + 1]);
+            }
+            else
+                latlons.push("");
+
+            for (let coordIndex = nextToken; (coordIndex < latlons.length) && (outputCount < limit); coordIndex++) {
+                if (coordIndex > 0)
+                    nextTokenRow.row = 0;
+
+                let reqParameters = requestParameters[0] + latlons[coordIndex];
+                await got.get(dataRequestUrl(collection, reqParameters, nextTokenRow.row, rowLimit),
+                              {responseType: 'json'})
+                .then(response => {
                     var rows;
                     var idx = 0;
 
                     try {
-                        rows = ((buf.length > 0) ? JSON.parse(buf) : Array());
+                        rows = ((response.body.length > 0) ? JSON.parse(response.body) : Array());
                         console.debug('Rows',rows.length);
                     }
                     catch (err) {
@@ -959,9 +1022,8 @@ class GeoJSONCollection implements Collection {
 
                             setTimeout(nextRow, 5);
                         }
-                        else {
+                        else if (((coordIndex + 1) >= latlons.length) || (outputCount >= limit))
                             ret.push(null);
-                        }
                     }
 
                     var features = { }
@@ -1076,25 +1138,39 @@ class GeoJSONCollection implements Collection {
                                 })
                             }
 
-                            ret.push(null);
+                            if (((coordIndex + 1) >= latlons.length) || (outputCount >= limit))
+                                ret.push(null);
                         }
 
                         })  // produce
                     }
 
                     if (collection.timeserieoutput) {
-                        setTimeout(nextTimeSerieRow, 5);
+                        nextTimeSerieRow();
+//                      setTimeout(nextTimeSerieRow, 5);
                     }
                     else {
-                        setTimeout(nextRow, 5);
+                        nextRow();
+//                      setTimeout(nextRow, 5);
                     }
-                }).on("error", (err) => {
-                    console.error('Data query error: ' + err.message);
-
-                    ret.push(err);
-                    ret.push(null);
                 })
-             });
+                .catch(err => {
+                    console.error('Data query error: ' + err.message);
+                    /*
+                    let feature = new dataFeature();
+                    feature.properties['observationType'] = 'MeasureTimeseriesObservation';
+                    feature.properties['timestep'] = [ ];
+                    feature.geometry = new Geometry();
+                    feature.properties['observedPropertyName'] = err.message;
+                    feature.properties['result'] = [ ];
+                    feature.geometry.coordinates[0] = 0;
+                    feature.geometry.coordinates[1] = 0;
+                    ret.push(new dataItem(feature,0));
+                    */
+                    ret.push(new Error(err.message));
+                    ret.push(null);
+                });
+            }  // for coordIndex
         }
 
         var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
