@@ -776,7 +776,7 @@ class GeoJSONCollection implements Collection {
                                                  )
                 ]
                ,[ 'time', new OptionalDataRequestParameter('&datetime=', 'datetime', extractTimeFilter, collection.defaultTime) ]
-               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 0, 'place', extractAdditionalFilter, null) ]
+               ,[ 'place', new RequiredGroupDataRequestParameter('location', '&places=', 1, 'place', extractAdditionalFilter, null) ]
                ,[ 'latlon', new RequiredGroupDataRequestParameter('location', '&latlons=', 1, 'latlon', extractAdditionalCoordinateFilter, null) ]
                ,[ 'lonlat', new RequiredGroupDataRequestParameter('location', '&lonlats=', 1, 'lonlat', extractAdditionalCoordinateFilter, null) ]
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', 0, BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
@@ -825,7 +825,7 @@ class GeoJSONCollection implements Collection {
                         nParams = (((dataRequestParameter.match(/,/g) || []).length) + 1);
                         nParams += ((dataRequestParameter.match(/%2C/g) || []).length) - 4; // -4; lat,lon,utctime,origintime
                     }
-                    else if ((parameterName == 'bbox') || (parameterName == 'place'))
+                    else if (parameterName == 'bbox')
                         nearestStations = false;
                 }
             }
@@ -898,17 +898,29 @@ class GeoJSONCollection implements Collection {
 
             // For nearest station(s) (latlon) query the latlon(s) are stored at parameter arrays 2. index
 
-            let latlons = [];
+            let locations = [];
             let rowLimit = nextTokenRow.limit;
             let nextToken = 0;
             let outputCount = 0;
 
             if (requestParameters.length > 1) {
-                let items = requestParameters[1].split("=");
-                let param = collection.neareststations + items[0];
-                let coords = items[1].split(",");
+                let queryParams = requestParameters[1].split("&");
 
-                if (nextTokenRow.nextToken >= (coords.length / 2)) {
+                for (let p = 1; (p < queryParams.length); p++) {
+                    let setting = queryParams[p].split("=");
+                    let params = collection.neareststations + "&" + setting[0];
+                    let values = setting[1].split(",");
+                    let inc = ((setting[0] == "places") ? 1 : 2);
+
+                    for (let v = 0; (v < values.length); v += inc) {
+                        if (inc == 1)
+                            locations.push(params + "=" + values[v]);
+                        else
+                            locations.push(params + "=" + values[v] + "," + values[v + 1]);
+                    }
+                }
+
+                if (nextTokenRow.nextToken >= locations.length) {
                     ret.push(null);
                     return ret;
                 }
@@ -916,18 +928,15 @@ class GeoJSONCollection implements Collection {
                 rowLimit = 1;
                 nextTokenRow.row = 0;
                 nextToken = nextTokenRow.curToken = nextTokenRow.nextToken;
-
-                for (let c = 0; (c < coords.length); c += 2)
-                    latlons.push(param + "=" + coords[c] + "," + coords[c + 1]);
             }
             else
-                latlons.push("");
+                locations.push("");
 
-            for (let coordIndex = nextToken; (coordIndex < latlons.length) && (outputCount < limit); coordIndex++) {
-                if (coordIndex > 0)
+            for (let locIndex = nextToken; (locIndex < locations.length) && (outputCount < limit); locIndex++) {
+                if (locIndex > 0)
                     nextTokenRow.row = 0;
 
-                let reqParameters = requestParameters[0] + latlons[coordIndex];
+                let reqParameters = requestParameters[0] + locations[locIndex];
                 await got.get(dataRequestUrl(collection, reqParameters, nextTokenRow.row, rowLimit),
                               {responseType: 'json'})
                 .then(response => {
@@ -1022,7 +1031,7 @@ class GeoJSONCollection implements Collection {
 
                             setTimeout(nextRow, 5);
                         }
-                        else if (((coordIndex + 1) >= latlons.length) || (outputCount >= limit))
+                        else if (((locIndex + 1) >= locations.length) || (outputCount >= limit))
                             ret.push(null);
                     }
 
@@ -1138,7 +1147,7 @@ class GeoJSONCollection implements Collection {
                                 })
                             }
 
-                            if (((coordIndex + 1) >= latlons.length) || (outputCount >= limit))
+                            if (((locIndex + 1) >= locations.length) || (outputCount >= limit))
                                 ret.push(null);
                         }
 
@@ -1170,7 +1179,7 @@ class GeoJSONCollection implements Collection {
                     ret.push(new Error(err.message));
                     ret.push(null);
                 });
-            }  // for coordIndex
+            }  // for locIndex
         }
 
         var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
