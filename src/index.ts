@@ -382,7 +382,7 @@ readStream.on('data', (chunk) => {
                                                               collection.defaultparameters,
                                                               conf.server,
                                                               collection.producer,
-                                                              null,
+                                                              collection.neareststations,
                                                               timeStep,
                                                               collection.defaultlocation,
                                                               collection.defaulttime,
