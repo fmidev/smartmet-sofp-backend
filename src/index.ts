@@ -70,14 +70,14 @@ interface ICollectionConfig {
 type CollectionConfigType = ICollectionConfig;
 
 const fs = require('fs');
-var readStream = fs.createReadStream('backends/smartmet-sofp-backend/cnf/smartmet.json');
-var buf = '';
+let configStream = fs.createReadStream('backends/smartmet-sofp-backend/cnf/smartmet.json');
+let configBuf = '';
 
-readStream.on('data', (chunk) => {
-    buf += chunk;
+configStream.on('data', (chunk) => {
+    configBuf += chunk;
 }).on("end", () => {
     try {
-        var conf = JSON.parse(buf);
+        let conf = JSON.parse(configBuf);
 
         // Server url
 
@@ -241,8 +241,8 @@ readStream.on('data', (chunk) => {
                     throw new Error('enumerabledatacollections: \'collections\' must be an array of objects');
                 }
 
-                var timeSteps = [ '' ];
-                var checkDefaultParams = true;
+                let timeSteps = [ '' ];
+                let checkDefaultParams = true;
 
                 if (_.has(collections,'timesteps')) {
                     if (!_.isArray(collections.timesteps)) {
@@ -259,8 +259,8 @@ readStream.on('data', (chunk) => {
                     }
 
                     _.forEach(timeSteps, (timeStep) => {
-                        var timeStepSuffix = '';
-                        var timeStepName = '';
+                        let timeStepSuffix = '';
+                        let timeStepName = '';
 
                         if (!_.isString(timeStep)) {
                             throw new Error('enumerabledatacollections: timestep must be a string');
@@ -535,10 +535,10 @@ class GeoJSONCollection implements Collection {
     }
 
     executeQuery(query : Query) : FeatureStream {
-        var ret = new FeatureStream();
-        var additionalFilter : Filter = _.find(query.filters, { filterClass: 'AdditionalParameterFilter' });
+        let ret = new FeatureStream();
+        let additionalFilter : Filter = _.find(query.filters, { filterClass: 'AdditionalParameterFilter' });
         ret.remainingFilter = _.without(query.filters, additionalFilter);
-        var nextToken = Number(query.nextToken || '0');
+        let nextToken = Number(query.nextToken || '0');
 
         class RequiredDataRequestParameter implements DataRequestParameter {
             parameterName : String;
@@ -597,9 +597,9 @@ class GeoJSONCollection implements Collection {
         }
         function extractDataQueryParameters(collection : GeoJSONCollection, queryFilters : Filter[], nextTokenRow, paramMap) : String[] {
             function extractPropertyFilter(requestParameter, queryFilters : Filter[], paramMap) : String {
-                var filter = requestParameter.parameterName;
-                var nElem = (filter.indexOf("=") < (filter.length - 1)) ? 1 : 0;
-                var propFilter : Filter = _.find(queryFilters, { filterClass: 'PropertyFilter' });
+                let filter = requestParameter.parameterName;
+                let nElem = (filter.indexOf("=") < (filter.length - 1)) ? 1 : 0;
+                let propFilter : Filter = _.find(queryFilters, { filterClass: 'PropertyFilter' });
 
                 if (propFilter && (_.keys(propFilter.parameters.properties).indexOf(requestParameter.propertyName) >= 0)) {
                     // To handle request with same data parameter multiple times, collect parameter names into a map with unique alias name
@@ -607,7 +607,7 @@ class GeoJSONCollection implements Collection {
                     if (requestParameter.propertyName == 'observedpropertyname') {
                         _.forEach(decodeURIComponent(propFilter.parameters.properties[requestParameter.propertyName]).split(','), (param) => {
                             param = param.trim();
-                            var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
+                            let alias = param +'_p' + String(Object.keys(paramMap).length + 1);
                             paramMap[alias] = param;
                             filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param) + ' as ' + alias);
                         });
@@ -623,7 +623,7 @@ class GeoJSONCollection implements Collection {
                 else if (_.isString(requestParameter.defaultValue) && (requestParameter.defaultValue != '')) {
                     _.forEach(decodeURIComponent(requestParameter.defaultValue).split(','), (param) => {
                         param = param.trim();
-                        var alias = param +'_p' + String(Object.keys(paramMap).length + 1);
+                        let alias = param +'_p' + String(Object.keys(paramMap).length + 1);
                         paramMap[alias] = param;
                         filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param) + ' as ' + alias);
                     });
@@ -651,19 +651,19 @@ class GeoJSONCollection implements Collection {
                    throw new Error('Invalid bbox: ' + _.map(BBOXCorners).join(','));
                 }
 
-                var nPoints = 100;
+                let nPoints = 100;
 
-                var dx = Math.abs(BBOXCorners[2] - BBOXCorners[0]);
-                var dy = Math.abs(BBOXCorners[3] - BBOXCorners[1]);
-                var len = Math.sqrt((dx * dy) / nPoints);
-                var xStep = dx / Math.round((dx / len) - 1);
-                var yStep = dy / Math.round((dy / len) - 1);
-                var width = dx + xStep/2;
-                var height = dy + yStep/2;
-                var x0 = (BBOXCorners[0] < BBOXCorners[2]) ? BBOXCorners[0] : BBOXCorners[2];
-                var y0 = (BBOXCorners[1] < BBOXCorners[3]) ? BBOXCorners[1] : BBOXCorners[3];
-                var x,y,delim = '';
-                var dataRequestParameter = '&latlons=';
+                let dx = Math.abs(BBOXCorners[2] - BBOXCorners[0]);
+                let dy = Math.abs(BBOXCorners[3] - BBOXCorners[1]);
+                let len = Math.sqrt((dx * dy) / nPoints);
+                let xStep = dx / Math.round((dx / len) - 1);
+                let yStep = dy / Math.round((dy / len) - 1);
+                let width = dx + xStep/2;
+                let height = dy + yStep/2;
+                let x0 = (BBOXCorners[0] < BBOXCorners[2]) ? BBOXCorners[0] : BBOXCorners[2];
+                let y0 = (BBOXCorners[1] < BBOXCorners[3]) ? BBOXCorners[1] : BBOXCorners[3];
+                let x,y,delim = '';
+                let dataRequestParameter = '&latlons=';
 
                 if (isNaN(width) || isNaN(height)) {
                     throw new Error('Invalid bbox: ' + _.map(BBOXCorners).join(','));
@@ -679,7 +679,7 @@ class GeoJSONCollection implements Collection {
                 return dataRequestParameter;
             }
             function extractBBOXFilter(requestParameter, queryFilters : Filter[]) : String {
-                var propFilter : Filter = _.find(queryFilters, { filterClass: 'BBOXFilter' });
+                let propFilter : Filter = _.find(queryFilters, { filterClass: 'BBOXFilter' });
 
                 if (propFilter) {
                     queryFilters.splice(queryFilters.indexOf(propFilter), 1);
@@ -696,10 +696,10 @@ class GeoJSONCollection implements Collection {
                         return requestParameter.parameterName + requestParameter.defaultValue.substring(5);
                     }
                     else {
-                        var numStrArr = requestParameter.defaultValue.substring(5).split(',');
-                        var BBOX = [];
+                        let numStrArr = requestParameter.defaultValue.substring(5).split(',');
+                        let BBOX = [];
 
-                        for (var i = 0, len = numStrArr.length; (i < len); i++) {
+                        for (let i = 0, len = numStrArr.length; (i < len); i++) {
                             BBOX.push(Number(numStrArr[i]));
                         }
 
@@ -710,8 +710,8 @@ class GeoJSONCollection implements Collection {
             function extractAdditionalFilter(requestParameter, queryFilters : Filter[]) : String {
                 // e.g. place=Helsinki[,Turku,...]
                 if (additionalFilter && (_.keys(additionalFilter.parameters.parameters).indexOf(requestParameter.propertyName) >= 0)) {
-                    var filter = requestParameter.parameterName;
-                    var nElem = 0;
+                    let filter = requestParameter.parameterName;
+                    let nElem = 0;
 
                     _.forEach(decodeURIComponent(additionalFilter.parameters.parameters[requestParameter.propertyName]).split(','), (param) => {
                         filter += (((nElem++ == 0) ? "" : ",") + encodeURIComponent(param.trim()));
@@ -723,10 +723,10 @@ class GeoJSONCollection implements Collection {
             function extractAdditionalCoordinateFilter(requestParameter, queryFilters : Filter[]) : String {
                 // latlon=lat,lon[,lat,lon,...] or lonlat=lon,lat[,lon,lat,...]
                 if (additionalFilter && (_.keys(additionalFilter.parameters.parameters).indexOf(requestParameter.propertyName) >= 0)) {
-                    var filter = requestParameter.parameterName;
-                    var nElem = 0;
-                    var nextCoordIsLat = (requestParameter.propertyName == 'latlon');
-                    var coords = additionalFilter.parameters.parameters[requestParameter.propertyName];
+                    let filter = requestParameter.parameterName;
+                    let nElem = 0;
+                    let nextCoordIsLat = (requestParameter.propertyName == 'latlon');
+                    let coords = additionalFilter.parameters.parameters[requestParameter.propertyName];
                     if (_.isArray(coords)) {
                         coords = coords.join(',');
                     }
@@ -738,13 +738,13 @@ class GeoJSONCollection implements Collection {
                     }
 
                     _.forEach(coords, (coord) => {
-                        var coordOk = false;
-                        var value : Number;
+                        let coordOk = false;
+                        let value : Number;
 
                         if (!isNaN(coord)) {
                             value = Number(coord);
-                            var minValue = (nextCoordIsLat ? -90 : -180);
-                            var maxValue = (nextCoordIsLat ? 90 : 180);
+                            let minValue = (nextCoordIsLat ? -90 : -180);
+                            let maxValue = (nextCoordIsLat ? 90 : 180);
 
                             coordOk = ((value >= minValue) && (value <= maxValue))
                         }
@@ -764,7 +764,7 @@ class GeoJSONCollection implements Collection {
 
             // data backend request parameters extracted from filters
             //
-            var BBOXQueryType = collection.enumerable ? 'bbox' : 'points';
+            let BBOXQueryType = collection.enumerable ? 'bbox' : 'points';
 
             const dataRequestParameterMap = new Map([
                 [
@@ -782,11 +782,11 @@ class GeoJSONCollection implements Collection {
                ,[ 'bbox', new RequiredGroupDataRequestParameter('location', '&bbox=', 0, BBOXQueryType, extractBBOXFilter, collection.defaultLocation) ]
             ]);
 
-            var parameterGroups = new Set();
-            var defaultLocation = collection.defaultLocation;
-            var dataRequestParameters = [ '' ];
-            var nParams : number = 0;
-            var nearestStations : boolean = (collection.neareststations ? true : false);
+            let parameterGroups = new Set();
+            let defaultLocation = collection.defaultLocation;
+            let dataRequestParameters = [ '' ];
+            let nParams : number = 0;
+            let nearestStations : boolean = (collection.neareststations ? true : false);
 
             for (const [parameterName, requestParameter] of dataRequestParameterMap.entries()) {
                 if (requestParameter instanceof RequiredGroupDataRequestParameter) {
@@ -801,7 +801,7 @@ class GeoJSONCollection implements Collection {
                     requestParameter.defaultValue = defaultLocation;
                 }
 
-                var dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
+                let dataRequestParameter = requestParameter.filterFunction(requestParameter, queryFilters, paramMap);
 
                 if (!dataRequestParameter) {
                     if (requestParameter instanceof OptionalDataRequestParameter) {
@@ -859,7 +859,7 @@ class GeoJSONCollection implements Collection {
                 nextTokenRow.limit = 0;
             }
             else {
-                var n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
+                let n = nextTokenRow.limit + (nextTokenRow.nextToken - nextTokenRow.curToken);
                 nextTokenRow.limit = Math.floor(n / nParams) + (((n % nParams) > 0) ? 1 : 0);
             }
 
@@ -869,7 +869,7 @@ class GeoJSONCollection implements Collection {
         }
 
         function dataRequestUrl(collection : GeoJSONCollection, dataRequestParameters : String, startRow : Number, limit : Number) : String {
-            var request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
+            let request = collection.server + '/timeseries?producer=' + collection.producer + dataRequestParameters +
                           '&startrow=' + String(startRow) + '&maxresults=' + String(limit) +
                           '&format=json&missingtext=null&tz=UTC' + collection.timestep;
             console.debug(request);
@@ -890,9 +890,8 @@ class GeoJSONCollection implements Collection {
 
             const http = require('http');
             const got = require('got');
-            var paramMap = new Map();
-            var requestParameters = extractDataQueryParameters(collection, ret.remainingFilter, nextTokenRow, paramMap);
-            var buf = '';
+            let paramMap = new Map();
+            let requestParameters = extractDataQueryParameters(collection, ret.remainingFilter, nextTokenRow, paramMap);
 
             collection.featureId.producer = collection.producer;
 
@@ -940,8 +939,8 @@ class GeoJSONCollection implements Collection {
                 await got.get(dataRequestUrl(collection, reqParameters, nextTokenRow.row, rowLimit),
                               {responseType: 'json'})
                 .then(response => {
-                    var rows;
-                    var idx = 0;
+                    let rows;
+                    let idx = 0;
 
                     try {
                         rows = ((response.body.length > 0) ? JSON.parse(response.body) : Array());
@@ -962,16 +961,16 @@ class GeoJSONCollection implements Collection {
 
                             feature.properties['observationType'] = 'MeasureObservation';
                             feature.geometry = new Geometry();
-                            var row = rows[idx++];
-                            var data = { };
-                            var N = 1;
+                            let row = rows[idx++];
+                            let data = { };
+                            let N = 1;
                             nextTokenRow.row++;
 
                             Object.keys(row).forEach((col) => {
                                 if ((col == 'phenomenonTime') || (col == 'resultTime'))  {
                                     // Use phenomenon time as result time for observations
                                     //
-                                    var c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
+                                    let c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
                                     feature.properties[col] = row[c];
                                 }
                                 else if ((col != 'lat') && (col != 'lon')) {
@@ -983,11 +982,11 @@ class GeoJSONCollection implements Collection {
                                 // Without 'timestep' timeseries may return less values than coordinates when there are missing (N/A)
                                 // values (e.g. minute resolution observations available for only some of the stations).
                                 //
-                                var arrayValue = _.isArray(data[param]);
-                                var arrayCoord = _.isArray(row['lon']);
-                                var numValues = arrayValue ? data[param].length : 1;
-                                var numCoords = arrayCoord ? row['lon'].length : 1;
-                                var valIdx = 0;
+                                let arrayValue = _.isArray(data[param]);
+                                let arrayCoord = _.isArray(row['lon']);
+                                let numValues = arrayValue ? data[param].length : 1;
+                                let numCoords = arrayCoord ? row['lon'].length : 1;
+                                let valIdx = 0;
 
                                 if (numValues != numCoords) {
                                     console.debug(paramMap[param] + ' value/coordinate count mismatch ' +
@@ -998,14 +997,14 @@ class GeoJSONCollection implements Collection {
                                 collection.featureId.parameter = paramMap[param];
 
                                 while ((valIdx < numValues) && (outputCount < limit)) {
-                                    var result = arrayValue ? data[param][valIdx] : data[param];
+                                    let result = arrayValue ? data[param][valIdx] : data[param];
 
                                     if (result != 'null') {
                                         if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
                                             feature.properties['observedPropertyName'] = paramMap[param];
                                             feature.properties['result'] = result;
-                                            var lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
-                                            var lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                            let lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                            let lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
                                             feature.geometry.coordinates[0] = lon;
                                             feature.geometry.coordinates[1] = lat;
 
@@ -1035,7 +1034,7 @@ class GeoJSONCollection implements Collection {
                             ret.push(null);
                     }
 
-                    var features = { }
+                    let features = { }
 
                     function nextTimeSerieRow() {
                         const cfeature = new dataFeature();
@@ -1043,16 +1042,16 @@ class GeoJSONCollection implements Collection {
                         feature = null;
 
                         if ((idx < rows.length) && (outputCount < limit)) {
-                            var row = rows[idx++];
-                            var data = { };
-                            var timeColumns = { }
+                            let row = rows[idx++];
+                            let data = { };
+                            let timeColumns = { }
                             nextTokenRow.row++;
 
                             Object.keys(row).forEach((col) => {
                                 if ((col == 'phenomenonTime') || (col == 'resultTime'))  {
                                     // Use phenomenon time as result time for observations
                                     //
-                                    var c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
+                                    let c = (((col == 'resultTime') && collection.enumerable) ? 'phenomenonTime' : col);
                                     timeColumns[col] = row[c];
                                 }
                                 else if ((col != 'lat') && (col != 'lon')) {
@@ -1064,11 +1063,11 @@ class GeoJSONCollection implements Collection {
                                 // Without 'timestep' timeseries may return less values than coordinates when there are missing (N/A)
                                 // values (e.g. minute resolution observations available for only some of the stations).
                                 //
-                                var arrayValue = _.isArray(data[param]);
-                                var arrayCoord = _.isArray(row['lon']);
-                                var numValues = arrayValue ? data[param].length : 1;
-                                var numCoords = arrayCoord ? row['lon'].length : 1;
-                                var valIdx = 0;
+                                let arrayValue = _.isArray(data[param]);
+                                let arrayCoord = _.isArray(row['lon']);
+                                let numValues = arrayValue ? data[param].length : 1;
+                                let numCoords = arrayCoord ? row['lon'].length : 1;
+                                let valIdx = 0;
 
                                 if (numValues != numCoords) {
                                     console.debug(paramMap[param] + ' value/coordinate count mismatch ' +
@@ -1108,8 +1107,8 @@ class GeoJSONCollection implements Collection {
 
                                         feature.properties['observedPropertyName'] = paramMap[param];
                                         feature.properties['result'] = [ ];
-                                        var lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
-                                        var lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
+                                        let lon = arrayCoord ? row['lon'][valIdx] : row['lon'];
+                                        let lat = arrayCoord ? row['lat'][valIdx] : row['lat'];
                                         feature.geometry.coordinates[0] = lon;
                                         feature.geometry.coordinates[1] = lat;
                                         features[param] = feature;
@@ -1119,7 +1118,7 @@ class GeoJSONCollection implements Collection {
                                         collection.featureId.area = _.toString(lat) + ',' + _.toString(lon);
                                     }
 
-                                    var idx = feature.properties['result'].length;
+                                    let idx = feature.properties['result'].length;
 
                                     feature.properties['result'][idx] = arrayValue ? data[param][valIdx] : data[param];
                                     feature.properties['timestep'][idx] = timeColumns['phenomenonTime'];
@@ -1182,7 +1181,7 @@ class GeoJSONCollection implements Collection {
             }  // for locIndex
         }
 
-        var nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
+        let nextTokenRow = { nextToken: nextToken, curToken: nextToken, row: 0, limit: query.limit };
 
         dataQuery(this, nextTokenRow, query.limit, ret);
 
@@ -1190,9 +1189,9 @@ class GeoJSONCollection implements Collection {
     }
 
     getFeatureById(id : string) : Promise<Feature> {
-        var ret = new Promise<Feature>((resolve) => {
+        let ret = new Promise<Feature>((resolve) => {
             setTimeout(() => {
-                var feature = (_.isObject(this.data) ? _.find(this.data.features, f => f.properties.id === id) : null);
+                let feature = (_.isObject(this.data) ? _.find(this.data.features, f => f.properties.id === id) : null);
                 resolve(feature);
             }, 5);
         });
