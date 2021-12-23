@@ -60,6 +60,7 @@ interface ICollectionConfig {
     description : string;
     producer : string;
     neareststations : string;
+    timeserierowlimit : number;
     defaultlocation : string;
     defaulttime : string;
     defaultparameters : string;
@@ -168,6 +169,7 @@ configStream.on('data', (chunk) => {
                                                       conf.server,
                                                       collection.producer,
                                                       null,
+                                                      0,
                                                       '',
                                                       collection.defaultlocation,
                                                       collection.defaulttime,
@@ -202,6 +204,7 @@ configStream.on('data', (chunk) => {
                                                       conf.server,
                                                       collection.producer,
                                                       null,
+                                                      0,
                                                       '',
                                                       collection.defaultlocation,
                                                       collection.defaulttime,
@@ -312,6 +315,14 @@ configStream.on('data', (chunk) => {
                             }
                         }
 
+                        if (_.has(collection,'timeserierowlimit')) {
+                            if (!_.isNumber(collection.timeserierowlimit)) {
+                                throw new Error('enumerabledatacollections: \'timeserierowlimit\' must be a number');
+                            }
+                        }
+                        else
+                            collection.timeserierowlimit = 0;
+
                         if (_.has(collection,'defaultlocation')) {
                             if ((!_.isString(collection.defaultlocation)) || (collection.defaultlocation == '')) {
                                 throw new Error('enumerabledatacollections: \'defaultlocation\' must be a nonempty string (locationparam=value)');
@@ -349,6 +360,7 @@ configStream.on('data', (chunk) => {
                                                               conf.server,
                                                               collection.producer,
                                                               collection.neareststations,
+                                                              0,
                                                               timeStep,
                                                               collection.defaultlocation,
                                                               collection.defaulttime,
@@ -383,6 +395,7 @@ configStream.on('data', (chunk) => {
                                                               conf.server,
                                                               collection.producer,
                                                               collection.neareststations,
+                                                              collection.timeserierowlimit,
                                                               timeStep,
                                                               collection.defaultlocation,
                                                               collection.defaulttime,
@@ -464,6 +477,7 @@ class GeoJSONCollection implements Collection {
     timestep : string;
     enumerable : boolean;
     timeserieoutput : boolean;
+    timeserierowlimit : number;
     defaultLocation : string;
     defaultTime : string;
     defaultParameters : string;
@@ -517,7 +531,7 @@ class GeoJSONCollection implements Collection {
         exampleValues : [ '24.94,60.19', '25.67,60.44', '27.67,62.97' ]
     }];
 
-    constructor(id, title, description, server, producer, neareststations, timestep, defaultLocation, defaultTime, defaultParameters, featureId, enumerable, timeSerieOutput) {
+    constructor(id, title, description, server, producer, neareststations, timeserierowlimit, timestep, defaultLocation, defaultTime, defaultParameters, featureId, enumerable, timeSerieOutput) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -525,6 +539,7 @@ class GeoJSONCollection implements Collection {
         this.server = server;
         this.producer = producer;
         this.neareststations = neareststations;
+        this.timeserierowlimit = timeserierowlimit;
         this.timestep = timestep;
         this.defaultLocation = defaultLocation;
         this.defaultTime = defaultTime;
@@ -765,12 +780,15 @@ class GeoJSONCollection implements Collection {
             // data backend request parameters extracted from filters
             //
             let BBOXQueryType = collection.enumerable ? 'bbox' : 'points';
+            let locationParams = collection.neareststations ? 'stationlat as lat,stationlon as lon'
+                                                            :  'lat as lat,lon as lon';
+            let timeParams = 'utctime as phenomenonTime,origintime as resultTime';
 
             const dataRequestParameterMap = new Map([
                 [
                  'observedpropertyname',
                  new OptionalDataRequestParameter(
-                                                  '&param=stationlat as lat,stationlon as lon,utctime as phenomenonTime,origintime as resultTime',
+                                                  '&param=' + locationParams + ',' + timeParams,
                                                   'observedpropertyname',
                                                   extractPropertyFilter, collection.defaultParameters
                                                  )
@@ -877,7 +895,7 @@ class GeoJSONCollection implements Collection {
             return request;
         }
 
-        async function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : Number, ret) {
+        async function dataQuery(collection : GeoJSONCollection, nextTokenRow, limit : number, ret) {
             class Geometry implements GeoJSONGeometry {
                 type : string;
                 coordinates : Number[];
@@ -924,7 +942,7 @@ class GeoJSONCollection implements Collection {
                     return ret;
                 }
 
-                rowLimit = 1;
+                rowLimit = (collection.timeserieoutput ? collection.timeserierowlimit : 1);
                 nextTokenRow.row = 0;
                 nextToken = nextTokenRow.curToken = nextTokenRow.nextToken;
             }
@@ -940,7 +958,7 @@ class GeoJSONCollection implements Collection {
                               {responseType: 'json'})
                 .then(response => {
                     let rows;
-                    let idx = 0;
+                    let rowIdx = 0;
 
                     try {
                         rows = ((response.body.length > 0) ? JSON.parse(response.body) : Array());
@@ -955,13 +973,13 @@ class GeoJSONCollection implements Collection {
                     }
 
                     function nextRow() {
-                        if ((idx < rows.length) && (outputCount < limit)) {
+                        if ((rowIdx < rows.length) && (outputCount < limit)) {
                             const cfeature = new dataFeature();
                             produce(cfeature, feature => {
 
                             feature.properties['observationType'] = 'MeasureObservation';
                             feature.geometry = new Geometry();
-                            let row = rows[idx++];
+                            let row = rows[rowIdx++];
                             let data = { };
                             let N = 1;
                             nextTokenRow.row++;
@@ -1041,8 +1059,8 @@ class GeoJSONCollection implements Collection {
                         produce(cfeature, feature => {
                         feature = null;
 
-                        if ((idx < rows.length) && (outputCount < limit)) {
-                            let row = rows[idx++];
+                        if ((rowIdx < rows.length) && (outputCount < limit)) {
+                            let row = rows[rowIdx++];
                             let data = { };
                             let timeColumns = { }
                             nextTokenRow.row++;
@@ -1084,6 +1102,13 @@ class GeoJSONCollection implements Collection {
                                             ((arrayCoord ? row['lat'][valIdx] : row['lat']) != feature.geometry.coordinates[1])
                                            ) {
                                             if (nextTokenRow.curToken++ >= nextTokenRow.nextToken) {
+                                                if (collection.neareststations) {
+                                                    // Location changes, ignore rest of the data
+                                                    //
+                                                    rowIdx = rows.length;
+                                                    break;
+                                                }
+
                                                 collection.featureId.parameter = feature.properties['observedPropertyName'];
                                                 collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
                                                 feature.id = idToString(collection.featureId);
@@ -1118,10 +1143,10 @@ class GeoJSONCollection implements Collection {
                                         collection.featureId.area = _.toString(lat) + ',' + _.toString(lon);
                                     }
 
-                                    let idx = feature.properties['result'].length;
+                                    let resIdx = feature.properties['result'].length;
 
-                                    feature.properties['result'][idx] = arrayValue ? data[param][valIdx] : data[param];
-                                    feature.properties['timestep'][idx] = timeColumns['phenomenonTime'];
+                                    feature.properties['result'][resIdx] = arrayValue ? data[param][valIdx] : data[param];
+                                    feature.properties['timestep'][resIdx] = timeColumns['phenomenonTime'];
 
                                     collection.featureId.time = timeColumns['phenomenonTime'];
 
