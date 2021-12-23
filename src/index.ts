@@ -34,6 +34,7 @@ interface IFeatureId {
     time_interpolation_method : string,
     level_interpolation_method : string,
     time0? : string
+    timeN? : string
 };
 
 type FeatureIdType = IFeatureId;
@@ -1110,7 +1111,7 @@ class GeoJSONCollection implements Collection {
                                                 }
 
                                                 collection.featureId.parameter = feature.properties['observedPropertyName'];
-                                                collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
+                                                collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.timeN;
                                                 feature.id = idToString(collection.featureId);
 
                                                 if (ret.push(new dataItem(feature,++nextTokenRow.nextToken))) {
@@ -1148,7 +1149,7 @@ class GeoJSONCollection implements Collection {
                                     feature.properties['result'][resIdx] = arrayValue ? data[param][valIdx] : data[param];
                                     feature.properties['timestep'][resIdx] = timeColumns['phenomenonTime'];
 
-                                    collection.featureId.time = timeColumns['phenomenonTime'];
+                                    collection.featureId.timeN = timeColumns['phenomenonTime'];
 
                                     valIdx++;
                                 }
@@ -1162,7 +1163,7 @@ class GeoJSONCollection implements Collection {
                                     if ((outputCount < limit) && (nextTokenRow.curToken++ >= nextTokenRow.nextToken)) {
                                         feature = features[param];
                                         collection.featureId.parameter = feature.properties['observedPropertyName'];
-                                        collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.time;
+                                        collection.featureId.time = collection.featureId.time0 + '/' + collection.featureId.timeN;
                                         feature.id = idToString(collection.featureId);
 
                                         ret.push(new dataItem(feature,++nextTokenRow.nextToken));
